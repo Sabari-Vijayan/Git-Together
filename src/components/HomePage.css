@@ -1,0 +1,67 @@
+.hero {
+  margin: 0;
+  padding: 0;
+}
+
+.title {
+  display: flex;
+  border-top: solid 2px gray;
+  border-bottom: solid 2px gray;
+  background-color:rgb(84, 7, 148);
+  align-items: center;
+  justify-content: space-between;
+  padding-left: 3rem;
+  padding-right: 3rem;
+  gap: 3rem;
+  border-radius: 60px;
+
+  width: 100%;
+  font-family: 'Press Start 2P', sans-serif;
+}
+
+.title img {
+  width: 60px;
+  height: 60px;
+}
+
+.form {
+  border-top: solid 2px rgb(255, 255, 255);
+  border-left: solid 2px rgb(255, 255, 255);
+  border-radius: 20px;
+  background-color:rgb(0, 0, 0);
+  color:rgb(255, 255, 255);
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+  padding: 2rem;
+  gap: 2rem;
+
+  font-size: 1.5rem;
+  line-height: 1.5;
+}
+
+.form button {
+  font-size: 1.5rem;
+  background-color: rgb(84, 7, 148);
+  border-radius: 20px;
+}
+
+.box {
+  border-radius: 10px;
+  width: 400px;
+  height: 75px;
+  font-size: 2rem;
+}
+
+.submit-btn (
+  background-color: white;
+  color: black;
+  font-size: 4rem;
+)
+
+.submit-btn hover {
+  background-color: #646cff;
+  color: white;
+}

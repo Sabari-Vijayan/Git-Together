@@ -1,0 +1,9 @@
+.box {
+    border: solid white 2.5px;
+    border-radius: 30px;
+    color: white;
+    font-size: 3rem;
+    line-height: 1.5rem;
+    margin: 2rem;
+    padding: 1rem;
+}
