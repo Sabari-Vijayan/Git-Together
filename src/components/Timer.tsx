@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../supabaseClient';
+import "./Timer.css";
 
 interface GameStatus {
   start_time: string;

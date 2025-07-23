@@ -34,7 +34,7 @@ const Leaderboard = () => {
         follower_count: p.follow_follows_id_fkey?.count || 0,
       }))
       .sort((a, b) => b.follower_count - a.follower_count)
-      .slice(0, 10);
+      .slice(0, 60);
 
     setLeaders(transformed);
   };

@@ -40,8 +40,14 @@ const HomePage = () => {
       <div className="hero">
         <div>
           <h1>
-            Hello! Make sure to use your real name and the same email that you
-            have linked with your GitHub account
+            Hello! Rules :
+            <ul>
+              <li>The game starts when the timers starts</li>
+              <li>Each follow and followed will be considered as a point</li>
+              <li>Only the follow and followed activity from the time of start of the game will be counted</li>
+              <li>The winner will be the one with with the most follows</li>
+              <li>Have fun</li>
+            </ul>
           </h1>
         </div>
         <div>
