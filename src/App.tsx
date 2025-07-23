@@ -1,53 +1,48 @@
 import { useState, useEffect } from 'react'
+import { Routes, Route, Navigate } from 'react-router-dom'
 import { supabase } from './supabaseClient.js'
+
 import './App.css'
-import HomePage from './components/HomePage.tsx'
+import HomePage from './pages/HomePage.tsx'
 import Auth from './components/Auth.tsx'
-import Leaderboard from './components/Leaderboard.tsx' 
-import AdminPanel from './components/Admin.tsx'
-import Timer from './components/Timer.tsx'
+import AdminPage from './pages/AdminPage.tsx'
 
-function App() {  
-
+function App() {
   const [session, setSession] = useState<any>(null)
 
-  const fetchSession = async () => {
-     const currentSession = await supabase.auth.getSession();
-     console.log("Current session:", currentSession);
-     setSession(currentSession.data.session);
-  };
-
   useEffect(() => {
-    fetchSession()
-
-    const { data: auth_listener } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-    });
-
-    return () => {
-      auth_listener.subscription.unsubscribe();
+    const getSession = async () => {
+      const { data } = await supabase.auth.getSession()
+      setSession(data.session)
     }
-  }, []);
+
+    getSession()
+
+    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session)
+    })
+
+    return () => listener.subscription.unsubscribe()
+  }, [])
 
   const logout = async () => {
-    await supabase.auth.signOut();
+    await supabase.auth.signOut()
   }
 
-return (
-    <>
- 
-        {session ? (
-        <>
-          <button onClick={logout}>log out</button>
-          <HomePage />
-          <Leaderboard />
-          <AdminPanel />
-          <Timer />
-        </>
-        ) : (
-        <Auth />
-        ) }
+  if (!session) return <Auth />
 
+  return (
+    <>
+      <div style={{ display: 'flex', justifyContent: 'space-between', padding: '1rem' }}>
+        <h3>Welcome!</h3>
+        <button onClick={logout}>Log out</button>
+      </div>
+
+      <Routes>
+        <Route path="/" element={<HomePage />} />
+        <Route path="/admin" element={<AdminPage />} />
+        <Route path="*" element={<Navigate to="/" />} />
+      </Routes>
     </>
   )
 }

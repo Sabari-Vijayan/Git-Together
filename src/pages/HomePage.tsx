@@ -1,6 +1,8 @@
 import React, { useState } from "react";
-import { supabase } from '../supabaseClient'
+import { supabase } from '../supabaseClient.js'
 import "./HomePage.css";
+import Timer from '../components/Timer.tsx';
+import Leaderboard from "../components/Leaderboard.tsx";
 
 const HomePage = () => {
   const [name, setName] = useState("");
@@ -42,30 +44,13 @@ const HomePage = () => {
             have linked with your GitHub account
           </h1>
         </div>
+        <div>
 
-        <form className="form" onSubmit={handleSubmit}>
-          <h2>What is your name?</h2>
-          <input
-            type="text"
-            placeholder="YOUR NAME"
-            className="box"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-          />
+            <Timer />
+            <Leaderboard />
+        
+        </div>
 
-          <h2>Provide your email ID?</h2>
-          <input
-            type="email"
-            placeholder="yourname@gmail.com"
-            className="box"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-          />
-
-          <button type="submit" className="submit-btn" disabled={Loading}>
-            {Loading ? "Submitting..." : "Submit"}
-          </button>
-        </form>
       </div>
     </>
   );
