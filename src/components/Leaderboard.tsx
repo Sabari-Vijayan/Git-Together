@@ -13,25 +13,36 @@ const Leaderboard = () => {
   const [leaders, setLeaders] = useState<LeaderboardEntry[]>([]);
 
   const fetchLeaderboard = async () => {
-    const { data, error } = await supabase
+    const { data: participants, error: participantError } = await supabase
       .from('participants')
-      .select(`
-        id,
-        name,
-        username,
-        avatar_url,
-        follow_follows_id_fkey:follow_follows_id(count)
-      `);
+      .select('id, name, username, avatar_url');
 
-    if (error) {
-      console.error('Error fetching leaderboard:', error.message);
+    if (participantError) {
+      console.error('Error fetching participants:', participantError.message);
       return;
     }
 
-    const transformed = data
-      .map((p: any) => ({
+    const { data: follows, error: followError } = await supabase
+      .from('follow')
+      .select('user_id'); // this is the one being followed
+
+    if (followError) {
+      console.error('Error fetching follows:', followError.message);
+      return;
+    }
+
+    // Count followers for each user
+    const followerMap: Record<string, number> = {};
+    for (const row of follows) {
+      const followedId = row.user_id;
+      followerMap[followedId] = (followerMap[followedId] || 0) + 1;
+    }
+
+    // Merge and sort
+    const transformed = participants
+      .map((p) => ({
         ...p,
-        follower_count: p.follow_follows_id_fkey?.count || 0,
+        follower_count: followerMap[p.id] || 0,
       }))
       .sort((a, b) => b.follower_count - a.follower_count)
       .slice(0, 60);
@@ -41,7 +52,7 @@ const Leaderboard = () => {
 
   useEffect(() => {
     fetchLeaderboard();
-    const interval = setInterval(fetchLeaderboard, 10000);
+    const interval = setInterval(fetchLeaderboard, 30000);
     return () => clearInterval(interval);
   }, []);
 
@@ -52,12 +63,14 @@ const Leaderboard = () => {
         {leaders.map((p, i) => (
           <li key={p.id} className="leaderboard-item">
             <img src={p.avatar_url} alt={p.username} width={40} height={40} />
-            <span>{i + 1}. {p.name || p.username} ({p.follower_count} followers)</span>
+            <span>
+              {i + 1}. {p.name || p.username} ({p.follower_count} followers)
+            </span>
           </li>
         ))}
       </ol>
     </div>
-  )
+  );
 };
 
 export default Leaderboard;
