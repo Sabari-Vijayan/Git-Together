@@ -1,0 +1,296 @@
+-- =========================================================================
+-- GIT-TOGETHER CONSOLIDATED INITIALIZATION DDL
+-- Paste this script directly into the Supabase SQL Editor to configure your DB.
+-- =========================================================================
+
+-- =========================================================================
+-- 1. ENUMS & CORE SCHEMA
+-- =========================================================================
+
+-- Custom Enum Types
+DO $$ 
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'room_status') THEN
+    CREATE TYPE room_status AS ENUM ('waiting', 'active', 'concluded');
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'sync_status_type') THEN
+    CREATE TYPE sync_status_type AS ENUM ('pending', 'processing', 'synced', 'failed');
+  END IF;
+END $$;
+
+-- Profiles Table (Linked to Supabase Auth.users)
+CREATE TABLE IF NOT EXISTS profiles (
+  id UUID REFERENCES auth.users ON DELETE CASCADE PRIMARY KEY,
+  github_username TEXT NOT NULL UNIQUE,
+  github_node_id TEXT,
+  avatar_url TEXT,
+  display_name TEXT,
+  provider_token TEXT,
+  provider_refresh_tk TEXT,
+  github_followers INTEGER DEFAULT 0 NOT NULL,
+  github_following INTEGER DEFAULT 0 NOT NULL,
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+-- Rooms Table
+CREATE TABLE IF NOT EXISTS rooms (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  organizer_id UUID REFERENCES profiles(id) ON DELETE SET NULL,
+  status room_status DEFAULT 'waiting'::room_status NOT NULL,
+  duration_seconds INTEGER DEFAULT 600 NOT NULL,
+  started_at TIMESTAMP WITH TIME ZONE,
+  ends_at TIMESTAMP WITH TIME ZONE,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
+  room_code VARCHAR(6) UNIQUE NOT NULL
+);
+
+-- Room Participants Table (Active connection state for a room)
+CREATE TABLE IF NOT EXISTS room_participants (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id UUID REFERENCES profiles(id) ON DELETE CASCADE NOT NULL,
+  room_id UUID REFERENCES rooms(id) ON DELETE CASCADE NOT NULL,
+  baseline_followers INTEGER DEFAULT 0 NOT NULL,
+  baseline_following INTEGER DEFAULT 0 NOT NULL,
+  current_followers INTEGER DEFAULT 0 NOT NULL,
+  current_following INTEGER DEFAULT 0 NOT NULL,
+  score NUMERIC(10, 2) DEFAULT 0.00 NOT NULL,
+  joined_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
+  UNIQUE(room_id, user_id)
+);
+
+-- Follow Ledger Table (Real-time follows queue for GitHub Sync Worker)
+CREATE TABLE IF NOT EXISTS follow_ledger (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  room_id UUID REFERENCES rooms(id) ON DELETE CASCADE NOT NULL,
+  follower_id UUID REFERENCES profiles(id) ON DELETE CASCADE NOT NULL,
+  followee_id UUID REFERENCES profiles(id) ON DELETE CASCADE NOT NULL,
+  sync_status sync_status_type DEFAULT 'pending'::sync_status_type NOT NULL,
+  sync_attempts INTEGER DEFAULT 0 NOT NULL,
+  synced_at TIMESTAMP WITH TIME ZONE,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
+  UNIQUE(room_id, follower_id, followee_id)
+);
+
+-- Indexes for performance on critical paths
+CREATE INDEX IF NOT EXISTS idx_rooms_code ON rooms(room_code);
+CREATE INDEX IF NOT EXISTS idx_participants_room ON room_participants(room_id);
+CREATE INDEX IF NOT EXISTS idx_ledger_room ON follow_ledger(room_id);
+CREATE INDEX IF NOT EXISTS idx_ledger_sync ON follow_ledger(sync_status) WHERE sync_status = 'pending';
+
+
+-- =========================================================================
+-- 2. TRIGGER FUNCTIONS & RPC ACTIONS
+-- =========================================================================
+
+-- A. Trigger for score calculation and counts on follow_ledger insert
+CREATE OR REPLACE FUNCTION handle_follow_ledger_insert()
+RETURNS TRIGGER AS $$
+BEGIN
+  -- Increment following count of the follower in this room
+  UPDATE room_participants
+  SET current_following = current_following + 1
+  WHERE user_id = NEW.follower_id AND room_id = NEW.room_id;
+
+  -- Increment followers count of the followee in this room
+  UPDATE room_participants
+  SET current_followers = current_followers + 1
+  WHERE user_id = NEW.followee_id AND room_id = NEW.room_id;
+
+  -- Recalculate scores for BOTH participants in the room
+  -- Score = Δ Followers - 0.5 * Δ Following
+  UPDATE room_participants
+  SET score = (current_followers - baseline_followers) - 0.5 * (current_following - baseline_following)
+  WHERE (user_id = NEW.follower_id OR user_id = NEW.followee_id) AND room_id = NEW.room_id;
+
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+DROP TRIGGER IF EXISTS trg_follow_ledger_insert ON follow_ledger;
+CREATE TRIGGER trg_follow_ledger_insert
+AFTER INSERT ON follow_ledger
+FOR EACH ROW
+EXECUTE FUNCTION handle_follow_ledger_insert();
+
+
+-- B. Trigger for snapshotting baseline followers/following when room status transitions to 'active'
+CREATE OR REPLACE FUNCTION handle_room_status_change()
+RETURNS TRIGGER AS $$
+BEGIN
+  -- Transitioning from 'waiting' to 'active' snapshots baseline stats
+  IF NEW.status = 'active' AND OLD.status = 'waiting' THEN
+    -- Update baseline and current stats using profile numbers
+    UPDATE room_participants rp
+    SET baseline_followers = p.github_followers,
+        baseline_following = p.github_following,
+        current_followers = p.github_followers,
+        current_following = p.github_following,
+        score = 0.00
+    FROM profiles p
+    WHERE rp.user_id = p.id AND rp.room_id = NEW.id;
+    
+    -- Set start/end timestamps
+    NEW.started_at = now();
+    NEW.ends_at = now() + (NEW.duration_seconds * INTERVAL '1 second');
+  END IF;
+  
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+DROP TRIGGER IF EXISTS trg_room_status_change ON rooms;
+CREATE TRIGGER trg_room_status_change
+BEFORE UPDATE OF status ON rooms
+FOR EACH ROW
+EXECUTE FUNCTION handle_room_status_change();
+
+
+-- C. Database RPC functions for github-sync-worker Edge Function
+CREATE OR REPLACE FUNCTION claim_pending_ledger_rows(batch_size INTEGER)
+RETURNS TABLE (id UUID, follower_id UUID, followee_id UUID) AS $$
+BEGIN
+  RETURN QUERY
+  UPDATE follow_ledger
+  SET sync_status = 'processing'::sync_status_type
+  WHERE follow_ledger.id IN (
+    SELECT fl.id
+    FROM follow_ledger fl
+    WHERE fl.sync_status = 'pending'::sync_status_type AND fl.sync_attempts < 3
+    FOR UPDATE SKIP LOCKED
+    LIMIT batch_size
+  )
+  RETURNING follow_ledger.id, follow_ledger.follower_id, follow_ledger.followee_id;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+
+CREATE OR REPLACE FUNCTION increment_sync_attempts(row_id UUID)
+RETURNS VOID AS $$
+BEGIN
+  UPDATE follow_ledger
+  SET sync_attempts = sync_attempts + 1,
+      sync_status = CASE WHEN sync_attempts + 1 >= 3 THEN 'failed'::sync_status_type ELSE 'pending'::sync_status_type END
+  WHERE id = row_id;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+
+-- =========================================================================
+-- 3. ROW LEVEL SECURITY (RLS) POLICIES
+-- =========================================================================
+
+-- Enable RLS on all tables
+ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
+ALTER TABLE rooms ENABLE ROW LEVEL SECURITY;
+ALTER TABLE room_participants ENABLE ROW LEVEL SECURITY;
+ALTER TABLE follow_ledger ENABLE ROW LEVEL SECURITY;
+
+-- Clean existing policies to avoid duplicate errors
+DROP POLICY IF EXISTS "Allow authenticated to read profiles" ON profiles;
+DROP POLICY IF EXISTS "Allow users to insert their own profile" ON profiles;
+DROP POLICY IF EXISTS "Allow users to update their own profile" ON profiles;
+
+DROP POLICY IF EXISTS "Allow authenticated to read rooms" ON rooms;
+DROP POLICY IF EXISTS "Allow users to create rooms" ON rooms;
+DROP POLICY IF EXISTS "Allow organizer to update their own rooms" ON rooms;
+DROP POLICY IF EXISTS "Allow organizer to delete their own rooms" ON rooms;
+
+DROP POLICY IF EXISTS "Allow room participants to view others" ON room_participants;
+DROP POLICY IF EXISTS "Allow users to join waiting rooms" ON room_participants;
+DROP POLICY IF EXISTS "Allow users to leave rooms" ON room_participants;
+
+DROP POLICY IF EXISTS "Allow room participants to view ledger rows" ON follow_ledger;
+DROP POLICY IF EXISTS "Allow players to log follows during active games" ON follow_ledger;
+
+-- A. Profiles Table Policies
+CREATE POLICY "Allow authenticated to read profiles" ON profiles
+  FOR SELECT TO authenticated USING (true);
+
+CREATE POLICY "Allow users to insert their own profile" ON profiles
+  FOR INSERT TO authenticated WITH CHECK (auth.uid() = id);
+
+CREATE POLICY "Allow users to update their own profile" ON profiles
+  FOR UPDATE TO authenticated USING (auth.uid() = id);
+
+-- B. Rooms Table Policies
+CREATE POLICY "Allow authenticated to read rooms" ON rooms
+  FOR SELECT TO authenticated USING (true);
+
+CREATE POLICY "Allow users to create rooms" ON rooms
+  FOR INSERT TO authenticated WITH CHECK (auth.uid() = organizer_id);
+
+CREATE POLICY "Allow organizer to update their own rooms" ON rooms
+  FOR UPDATE TO authenticated USING (auth.uid() = organizer_id);
+
+CREATE POLICY "Allow organizer to delete their own rooms" ON rooms
+  FOR DELETE TO authenticated USING (auth.uid() = organizer_id);
+
+-- C. Room Participants Table Policies
+CREATE OR REPLACE FUNCTION is_member_of_room(r_id UUID, u_id UUID)
+RETURNS BOOLEAN AS $$
+BEGIN
+  RETURN EXISTS (
+    SELECT 1 FROM room_participants
+    WHERE room_id = r_id AND user_id = u_id
+  );
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+CREATE POLICY "Allow room participants to view others" ON room_participants
+  FOR SELECT TO authenticated USING (true);
+
+CREATE POLICY "Allow users to join waiting rooms" ON room_participants
+  FOR INSERT TO authenticated WITH CHECK (
+    auth.uid() = user_id AND 
+    EXISTS (
+      SELECT 1 FROM rooms r
+      WHERE r.id = room_id AND r.status = 'waiting'::room_status
+    )
+  );
+
+CREATE POLICY "Allow users to leave rooms" ON room_participants
+  FOR DELETE TO authenticated USING (auth.uid() = user_id);
+
+-- D. Follow Ledger Table Policies
+CREATE POLICY "Allow room participants to view ledger rows" ON follow_ledger
+  FOR SELECT TO authenticated USING (true);
+
+CREATE POLICY "Allow players to log follows during active games" ON follow_ledger
+  FOR INSERT TO authenticated WITH CHECK (
+    auth.uid() = follower_id AND
+    EXISTS (
+      SELECT 1 FROM rooms r
+      WHERE r.id = room_id AND r.status = 'active'::room_status AND (r.ends_at IS NULL OR r.ends_at > now())
+    )
+  );
+
+
+-- =========================================================================
+-- 5. ENABLE SUPABASE REALTIME REPLICATION
+-- =========================================================================
+
+-- In Supabase, Realtime must be explicitly enabled per-table by adding
+-- the tables to the supabase_realtime publication list.
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_publication_tables 
+    WHERE pubname = 'supabase_realtime' AND tablename = 'rooms'
+  ) THEN
+    ALTER PUBLICATION supabase_realtime ADD TABLE rooms;
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_publication_tables 
+    WHERE pubname = 'supabase_realtime' AND tablename = 'room_participants'
+  ) THEN
+    ALTER PUBLICATION supabase_realtime ADD TABLE room_participants;
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_publication_tables 
+    WHERE pubname = 'supabase_realtime' AND tablename = 'follow_ledger'
+  ) THEN
+    ALTER PUBLICATION supabase_realtime ADD TABLE follow_ledger;
+  END IF;
+END $$;

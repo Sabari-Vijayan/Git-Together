@@ -1,0 +1,1092 @@
+<!-- 1. Landing & Authenticate -->
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, viewport-fit=cover" name="viewport"/>
+<title>GitSync | Secure Developer Networking</title>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Google Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                "on-background": "#1b1b1d",
+                "outline-variant": "#c6c6cd",
+                "surface-container-lowest": "#ffffff",
+                "on-error": "#ffffff",
+                "primary-container": "#131b2e",
+                "secondary-fixed-dim": "#b7c8e1",
+                "surface-tint": "#565e74",
+                "error-container": "#ffdad6",
+                "on-primary-fixed-variant": "#3f465c",
+                "outline": "#76777d",
+                "on-secondary-fixed": "#0b1c30",
+                "on-secondary-fixed-variant": "#38485d",
+                "error": "#ba1a1a",
+                "tertiary-container": "#271901",
+                "on-surface": "#1b1b1d",
+                "on-secondary-container": "#54647a",
+                "on-tertiary-fixed": "#271901",
+                "surface-container": "#f0edef",
+                "on-error-container": "#93000a",
+                "on-tertiary": "#ffffff",
+                "surface-dim": "#dcd9db",
+                "inverse-primary": "#bec6e0",
+                "inverse-on-surface": "#f3f0f2",
+                "primary-fixed-dim": "#bec6e0",
+                "tertiary-fixed": "#fcdeb5",
+                "surface-container-low": "#f6f3f5",
+                "on-primary-fixed": "#131b2e",
+                "secondary-fixed": "#d3e4fe",
+                "primary": "#000000",
+                "surface": "#fcf8fa",
+                "on-primary": "#ffffff",
+                "secondary-container": "#d0e1fb",
+                "on-tertiary-container": "#98805d",
+                "inverse-surface": "#303032",
+                "background": "#fcf8fa",
+                "on-primary-container": "#7c839b",
+                "tertiary": "#000000",
+                "on-tertiary-fixed-variant": "#574425",
+                "tertiary-fixed-dim": "#dec29a",
+                "surface-container-high": "#eae7e9",
+                "on-secondary": "#ffffff",
+                "on-surface-variant": "#45464d",
+                "primary-fixed": "#dae2fd",
+                "secondary": "#505f76",
+                "surface-bright": "#fcf8fa",
+                "surface-variant": "#e4e2e4",
+                "surface-container-highest": "#e4e2e4"
+            },
+            "borderRadius": {
+                "DEFAULT": "0.125rem",
+                "lg": "0.25rem",
+                "xl": "0.5rem",
+                "full": "0.75rem"
+            },
+            "spacing": {
+                "md": "16px",
+                "xl": "32px",
+                "margin": "20px",
+                "sm": "8px",
+                "base": "4px",
+                "xs": "4px",
+                "lg": "24px",
+                "gutter": "16px"
+            },
+            "fontFamily": {
+                "body-lg": ["Inter"],
+                "button": ["Inter"],
+                "body-sm": ["Inter"],
+                "h2": ["Inter"],
+                "label-mono": ["JetBrains Mono"],
+                "display": ["Inter"],
+                "h1": ["Inter"]
+            },
+            "fontSize": {
+                "body-lg": ["16px", {"lineHeight": "24px", "letterSpacing": "0.01em", "fontWeight": "400"}],
+                "button": ["14px", {"lineHeight": "20px", "letterSpacing": "0.02em", "fontWeight": "600"}],
+                "body-sm": ["14px", {"lineHeight": "20px", "letterSpacing": "0px", "fontWeight": "400"}],
+                "h2": ["20px", {"lineHeight": "28px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                "label-mono": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "500"}],
+                "display": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                "h1": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "700"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            display: inline-block;
+            line-height: 1;
+            text-transform: none;
+            letter-spacing: normal;
+            word-wrap: normal;
+            white-space: nowrap;
+            direction: ltr;
+        }
+        body {
+            background-color: #fcf8fa;
+            -webkit-font-smoothing: antialiased;
+        }
+        .bento-grid {
+            display: grid;
+            grid-template-columns: repeat(12, 1fr);
+            gap: 16px;
+        }
+        .obsidian-button {
+            background-color: #0F172A;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .obsidian-button:active {
+            transform: scale(0.98);
+            background-color: #1e293b;
+        }
+        .fade-in {
+            animation: fadeIn 0.8s ease-out forwards;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-background min-h-screen flex flex-col font-body-lg">
+<!-- TopAppBar -->
+<header class="bg-background dark:bg-background border-b border-outline-variant dark:border-outline fixed top-0 left-0 w-full z-50">
+<div class="flex justify-between items-center w-full px-margin h-16 max-w-7xl mx-auto">
+<div class="flex items-center gap-sm">
+<span class="font-h1 text-h1 tracking-tighter text-on-background dark:text-on-background">GitSync</span>
+</div>
+<div class="flex items-center gap-md">
+<button class="material-symbols-outlined text-primary dark:text-primary hover:bg-surface-container-high dark:hover:bg-surface-container-highest transition-colors p-2 rounded-full active:scale-95 transition-transform duration-150" data-icon="qr_code_scanner">qr_code_scanner</button>
+</div>
+</div>
+</header>
+<main class="flex-grow flex flex-col items-center justify-center px-margin pt-24 pb-12 max-w-3xl mx-auto w-full">
+<!-- Hero Visual Section -->
+<div class="w-full mb-xl fade-in" style="animation-delay: 0.1s;">
+<div class="relative w-full aspect-video rounded-xl overflow-hidden border border-outline-variant bg-surface-container-lowest">
+<img class="w-full h-full object-cover grayscale opacity-90" data-alt="A macro shot of a sleek, high-end mechanical keyboard on a white minimalist desk. The scene is bathed in bright, neutral light-mode lighting with soft shadows. A single glowing accent line of deep obsidian reflects off the keys, conveying a sense of precision and professional developer utility. The overall mood is quiet, efficient, and technologically advanced, echoing a premium SaaS-Clean aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuD57TL14rMiR3YgC_wMqXNN04wLi_-prW3zY_ZoHe5RU48bCmvr2Nz6jl6dd15mowPO5A_5kWpsZqrCLTwVG2Nm3Zjs3nf3ovd-pjZVT_bDUGLYgT_fpdgeyPkYMjSqkFRzX_FgaajQtqV0HAISEFyF2_d4j74XCljKqQAyW0k0zVSCcJhKJpmqTQl_qIi-rMNM78GTFl0ZJpgiV4nkhJmYtnVHSmdfRBNfNRxgN5ZiCWxiz3K_LlcYh1Jw_V5Ul91Mgcw780L3bD3t"/>
+<div class="absolute inset-0 bg-gradient-to-t from-background/40 to-transparent"></div>
+</div>
+</div>
+<!-- Explanation Card (Bento Style) -->
+<section class="w-full space-y-gutter fade-in" style="animation-delay: 0.2s;">
+<div class="bg-surface-container-lowest border border-outline-variant p-lg rounded-xl shadow-sm">
+<div class="space-y-lg">
+<div class="flex items-start gap-md">
+<div class="flex-shrink-0 w-8 h-8 rounded-full bg-primary text-on-primary flex items-center justify-center font-label-mono text-label-mono">01</div>
+<div>
+<h2 class="font-h2 text-h2 mb-xs">Sign In</h2>
+<p class="text-secondary font-body-sm">Authorize with GitHub to sync your professional presence securely.</p>
+</div>
+</div>
+<div class="w-full h-px bg-outline-variant opacity-50"></div>
+<div class="flex items-start gap-md">
+<div class="flex-shrink-0 w-8 h-8 rounded-full bg-primary text-on-primary flex items-center justify-center font-label-mono text-label-mono">02</div>
+<div>
+<h2 class="font-h2 text-h2 mb-xs">Scan Peers</h2>
+<p class="text-secondary font-body-sm">Use proximity scanning or room codes to find developers in your vicinity.</p>
+</div>
+</div>
+<div class="w-full h-px bg-outline-variant opacity-50"></div>
+<div class="flex items-start gap-md">
+<div class="flex-shrink-0 w-8 h-8 rounded-full bg-primary text-on-primary flex items-center justify-center font-label-mono text-label-mono">03</div>
+<div>
+<h2 class="font-h2 text-h2 mb-xs">Gain Followers</h2>
+<p class="text-secondary font-body-sm">Instantly exchange profiles and grow your network with high-glanceability cards.</p>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Main Action Area -->
+<section class="w-full mt-xl space-y-md fade-in" style="animation-delay: 0.3s;">
+<button class="obsidian-button w-full h-14 flex items-center justify-center gap-sm rounded-lg text-on-primary font-button group shadow-sm">
+<!-- Manual GitHub Icon Silhouette -->
+<svg aria-hidden="true" class="w-5 h-5 fill-current" viewbox="0 0 24 24">
+<path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.744.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"></path>
+</svg>
+<span class="text-button">Sign In with GitHub</span>
+</button>
+<div class="relative py-base flex items-center">
+<div class="flex-grow border-t border-outline-variant"></div>
+<span class="flex-shrink mx-gutter text-secondary font-label-mono text-[10px] uppercase tracking-widest">or</span>
+<div class="flex-grow border-t border-outline-variant"></div>
+</div>
+<div class="w-full">
+<label class="sr-only" for="room-code">Room Code</label>
+<input class="w-full h-12 bg-surface-container-low border border-outline-variant rounded-lg px-md text-body-sm font-label-mono focus:ring-1 focus:ring-primary focus:border-primary transition-all placeholder:text-outline placeholder:font-body-sm" id="room-code" placeholder="Or enter Room Code manually" type="text"/>
+</div>
+</section>
+<!-- Secondary Info -->
+<footer class="mt-xl text-center fade-in" style="animation-delay: 0.4s;">
+<p class="text-secondary font-label-mono text-label-mono">v1.0.2-stable | Peer-to-Peer Encrypted</p>
+</footer>
+</main>
+<!-- Suppressed BottomNavBar for transactional/auth screen -->
+<!-- Navigation shell is hidden to prioritize the focus on authentication as per "Semantic Shell" mandate -->
+<script>
+        // Micro-interaction for the Room Code input
+        const roomInput = document.getElementById('room-code');
+        roomInput.addEventListener('focus', () => {
+            roomInput.parentElement.classList.add('scale-[1.01]');
+        });
+        roomInput.addEventListener('blur', () => {
+            roomInput.parentElement.classList.remove('scale-[1.01]');
+        });
+
+        // Simple button press feedback
+        const btn = document.querySelector('.obsidian-button');
+        btn.addEventListener('click', () => {
+            console.log('Initiating GitHub OAuth flow...');
+            // In a real app: window.location.href = '/auth/github';
+        });
+    </script>
+</body></html>
+
+<!-- 2. Participant Dashboard -->
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, viewport-fit=cover" name="viewport"/>
+<title>GitSync Participant Dashboard</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind Config Verbatim -->
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-background": "#1b1b1d",
+                    "outline-variant": "#c6c6cd",
+                    "surface-container-lowest": "#ffffff",
+                    "on-error": "#ffffff",
+                    "primary-container": "#131b2e",
+                    "secondary-fixed-dim": "#b7c8e1",
+                    "surface-tint": "#565e74",
+                    "error-container": "#ffdad6",
+                    "on-primary-fixed-variant": "#3f465c",
+                    "outline": "#76777d",
+                    "on-secondary-fixed": "#0b1c30",
+                    "on-secondary-fixed-variant": "#38485d",
+                    "error": "#ba1a1a",
+                    "tertiary-container": "#271901",
+                    "on-surface": "#1b1b1d",
+                    "on-secondary-container": "#54647a",
+                    "on-tertiary-fixed": "#271901",
+                    "surface-container": "#f0edef",
+                    "on-error-container": "#93000a",
+                    "on-tertiary": "#ffffff",
+                    "surface-dim": "#dcd9db",
+                    "inverse-primary": "#bec6e0",
+                    "inverse-on-surface": "#f3f0f2",
+                    "primary-fixed-dim": "#bec6e0",
+                    "tertiary-fixed": "#fcdeb5",
+                    "surface-container-low": "#f6f3f5",
+                    "on-primary-fixed": "#131b2e",
+                    "secondary-fixed": "#d3e4fe",
+                    "primary": "#000000",
+                    "surface": "#fcf8fa",
+                    "on-primary": "#ffffff",
+                    "secondary-container": "#d0e1fb",
+                    "on-tertiary-container": "#98805d",
+                    "inverse-surface": "#303032",
+                    "background": "#fcf8fa",
+                    "on-primary-container": "#7c839b",
+                    "tertiary": "#000000",
+                    "on-tertiary-fixed-variant": "#574425",
+                    "tertiary-fixed-dim": "#dec29a",
+                    "surface-container-high": "#eae7e9",
+                    "on-secondary": "#ffffff",
+                    "on-surface-variant": "#45464d",
+                    "primary-fixed": "#dae2fd",
+                    "secondary": "#505f76",
+                    "surface-bright": "#fcf8fa",
+                    "surface-variant": "#e4e2e4",
+                    "surface-container-highest": "#e4e2e4"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.125rem",
+                    "lg": "0.25rem",
+                    "xl": "0.5rem",
+                    "full": "0.75rem"
+            },
+            "spacing": {
+                    "md": "16px",
+                    "xl": "32px",
+                    "margin": "20px",
+                    "sm": "8px",
+                    "base": "4px",
+                    "xs": "4px",
+                    "lg": "24px",
+                    "gutter": "16px"
+            },
+            "fontFamily": {
+                    "body-lg": ["Inter"],
+                    "button": ["Inter"],
+                    "body-sm": ["Inter"],
+                    "h2": ["Inter"],
+                    "label-mono": ["JetBrains Mono"],
+                    "display": ["Inter"],
+                    "h1": ["Inter"]
+            },
+            "fontSize": {
+                    "body-lg": ["16px", {"lineHeight": "24px", "letterSpacing": "0.01em", "fontWeight": "400"}],
+                    "button": ["14px", {"lineHeight": "20px", "letterSpacing": "0.02em", "fontWeight": "600"}],
+                    "body-sm": ["14px", {"lineHeight": "20px", "letterSpacing": "0px", "fontWeight": "400"}],
+                    "h2": ["20px", {"lineHeight": "28px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                    "label-mono": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "500"}],
+                    "display": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "h1": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "700"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        @keyframes pulse-status {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.7; transform: scale(0.98); }
+        }
+        .animate-status {
+            animation: pulse-status 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        body {
+            -webkit-tap-highlight-color: transparent;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-background min-h-screen flex flex-col font-body-lg overflow-x-hidden">
+<!-- TopAppBar -->
+<header class="bg-background dark:bg-background border-b border-outline-variant dark:border-outline sticky top-0 z-50">
+<div class="flex justify-between items-center w-full px-margin h-16 max-w-7xl mx-auto">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full overflow-hidden border border-outline-variant">
+<img alt="Participant Avatar" class="w-full h-full object-cover" data-alt="A professional studio portrait of a software developer with a clean, minimalist background. The lighting is bright and high-key, reflecting a modern SaaS aesthetic. The individual has a neutral, focused expression, wearing dark casual attire that contrasts with the pristine white and soft grey tones of the environment." src="https://lh3.googleusercontent.com/aida-public/AB6AXuA5SaC-pM3yaO2NZ8sPsyWvmIKrqt24fDwtQbBl07HxhnZOnWChv53zpDp6rrG7osu5a6jzPreX39-ewuBToQ5by1wkXKyWrZGt_TQ0CHyvpW9Z73AhfvorUuNplYcDWECOZfj5Z4uk5FCoYSGTHnzEysgJLkoqfWIZBrPxORASajiBvxODLMEZ5i158Sandp2GszIVbPbB44Fh6XiECNOarZvLVBTR3_OLe4Z_IZaXeZTqkygbkzv4c1GYHD2DMi5k9XD79WZKcldJ"/>
+</div>
+<h1 class="font-h1 text-h1 tracking-tighter text-on-background dark:text-on-background">GitSync</h1>
+</div>
+<div class="flex items-center gap-2 px-3 py-1 bg-surface-container-low rounded-full border border-outline-variant animate-status">
+<span class="w-2 h-2 rounded-full bg-[#10B981]"></span>
+<span class="font-label-mono text-label-mono text-[#10B981]">Status: In Lobby</span>
+</div>
+</div>
+</header>
+<!-- Main Content: Canvas -->
+<main class="flex-grow flex flex-col items-center justify-center px-margin py-xl max-w-lg mx-auto w-full">
+<!-- QR Identity Card -->
+<div class="w-full bg-surface-container-lowest border border-outline-variant rounded-lg p-xl flex flex-col items-center gap-lg transition-transform active:scale-[0.99] duration-150">
+<!-- QR Placeholder Container -->
+<div class="relative group cursor-pointer">
+<div class="w-64 h-64 bg-white border border-outline p-4 flex items-center justify-center">
+<!-- Complex QR Pattern visualization using CSS (No SVG data-URI) -->
+<div class="w-full h-full border-2 border-primary border-dashed flex items-center justify-center opacity-80">
+<span class="material-symbols-outlined text-primary text-[120px]">qr_code_2</span>
+</div>
+</div>
+<div class="absolute -top-2 -right-2 bg-primary text-on-primary p-2 rounded-full shadow-lg">
+<span class="material-symbols-outlined text-sm">share</span>
+</div>
+</div>
+<div class="text-center space-y-sm">
+<h2 class="font-h1 text-h1 text-primary">@github_username</h2>
+<p class="font-body-lg text-secondary text-body-lg max-w-[240px] mx-auto">
+                    Let others scan this card to follow you instantly.
+                </p>
+</div>
+</div>
+<!-- Action Area -->
+<div class="w-full mt-xl space-y-md">
+<button class="w-full h-12 flex items-center justify-center gap-2 border border-primary text-primary font-button text-button rounded-lg hover:bg-surface-container-high active:scale-95 transition-all duration-150">
+<span class="material-symbols-outlined text-base">photo_camera</span>
+                Open Camera to Scan Peer
+            </button>
+<div class="flex justify-center items-center gap-2 py-md">
+<span class="w-1.5 h-1.5 rounded-full bg-outline-variant"></span>
+<span class="font-label-mono text-label-mono text-secondary">Awaiting network discovery...</span>
+</div>
+</div>
+</main>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-gutter py-2 pb-safe bg-surface dark:bg-surface-dim border-t border-outline-variant dark:border-outline">
+<a class="flex flex-col items-center justify-center text-secondary dark:text-secondary-fixed-dim hover:text-primary dark:hover:text-primary-fixed active:opacity-80 transition-all" href="#">
+<span class="material-symbols-outlined">rss_feed</span>
+<span class="font-label-mono text-label-mono">Feed</span>
+</a>
+<a class="flex flex-col items-center justify-center text-secondary dark:text-secondary-fixed-dim hover:text-primary dark:hover:text-primary-fixed active:opacity-80 transition-all" href="#">
+<span class="material-symbols-outlined">leaderboard</span>
+<span class="font-label-mono text-label-mono">Leaderboard</span>
+</a>
+<a class="flex flex-col items-center justify-center text-secondary dark:text-secondary-fixed-dim hover:text-primary dark:hover:text-primary-fixed active:opacity-80 transition-all" href="#">
+<span class="material-symbols-outlined">center_focus_weak</span>
+<span class="font-label-mono text-label-mono">Scan</span>
+</a>
+<a class="flex flex-col items-center justify-center text-primary dark:text-primary font-bold active:opacity-80 transition-all" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">person</span>
+<span class="font-label-mono text-label-mono">Profile</span>
+</a>
+</nav>
+<!-- Atmospheric Micro-interaction -->
+<script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const qrCard = document.querySelector('.bg-surface-container-lowest');
+            qrCard.addEventListener('mousemove', (e) => {
+                const rect = qrCard.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                const centerX = rect.width / 2;
+                const centerY = rect.height / 2;
+                const rotateX = (y - centerY) / 20;
+                const rotateY = (centerX - x) / 20;
+                qrCard.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
+            });
+            qrCard.addEventListener('mouseleave', () => {
+                qrCard.style.transform = `perspective(1000px) rotateX(0deg) rotateY(0deg)`;
+            });
+        });
+    </script>
+</body></html>
+
+<!-- 3. Live Game Feed -->
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, viewport-fit=cover" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@500;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-background": "#1b1b1d",
+                    "outline-variant": "#c6c6cd",
+                    "surface-container-lowest": "#ffffff",
+                    "on-error": "#ffffff",
+                    "primary-container": "#131b2e",
+                    "secondary-fixed-dim": "#b7c8e1",
+                    "surface-tint": "#565e74",
+                    "error-container": "#ffdad6",
+                    "on-primary-fixed-variant": "#3f465c",
+                    "outline": "#76777d",
+                    "on-secondary-fixed": "#0b1c30",
+                    "on-secondary-fixed-variant": "#38485d",
+                    "error": "#ba1a1a",
+                    "tertiary-container": "#271901",
+                    "on-surface": "#1b1b1d",
+                    "on-secondary-container": "#54647a",
+                    "on-tertiary-fixed": "#271901",
+                    "surface-container": "#f0edef",
+                    "on-error-container": "#93000a",
+                    "on-tertiary": "#ffffff",
+                    "surface-dim": "#dcd9db",
+                    "inverse-primary": "#bec6e0",
+                    "inverse-on-surface": "#f3f0f2",
+                    "primary-fixed-dim": "#bec6e0",
+                    "tertiary-fixed": "#fcdeb5",
+                    "surface-container-low": "#f6f3f5",
+                    "on-primary-fixed": "#131b2e",
+                    "secondary-fixed": "#d3e4fe",
+                    "primary": "#000000",
+                    "surface": "#fcf8fa",
+                    "on-primary": "#ffffff",
+                    "secondary-container": "#d0e1fb",
+                    "on-tertiary-container": "#98805d",
+                    "inverse-surface": "#303032",
+                    "background": "#fcf8fa",
+                    "on-primary-container": "#7c839b",
+                    "tertiary": "#000000",
+                    "on-tertiary-fixed-variant": "#574425",
+                    "tertiary-fixed-dim": "#dec29a",
+                    "surface-container-high": "#eae7e9",
+                    "on-secondary": "#ffffff",
+                    "on-surface-variant": "#45464d",
+                    "primary-fixed": "#dae2fd",
+                    "secondary": "#505f76",
+                    "surface-bright": "#fcf8fa",
+                    "surface-variant": "#e4e2e4",
+                    "surface-container-highest": "#e4e2e4"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.125rem",
+                    "lg": "0.25rem",
+                    "xl": "0.5rem",
+                    "full": "0.75rem"
+            },
+            "spacing": {
+                    "md": "16px",
+                    "xl": "32px",
+                    "margin": "20px",
+                    "sm": "8px",
+                    "base": "4px",
+                    "xs": "4px",
+                    "lg": "24px",
+                    "gutter": "16px"
+            },
+            "fontFamily": {
+                    "body-lg": ["Inter"],
+                    "button": ["Inter"],
+                    "body-sm": ["Inter"],
+                    "h2": ["Inter"],
+                    "label-mono": ["JetBrains Mono"],
+                    "display": ["Inter"],
+                    "h1": ["Inter"]
+            },
+            "fontSize": {
+                    "body-lg": ["16px", {"lineHeight": "24px", "letterSpacing": "0.01em", "fontWeight": "400"}],
+                    "button": ["14px", {"lineHeight": "20px", "letterSpacing": "0.02em", "fontWeight": "600"}],
+                    "body-sm": ["14px", {"lineHeight": "20px", "letterSpacing": "0px", "fontWeight": "400"}],
+                    "h2": ["20px", {"lineHeight": "28px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                    "label-mono": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "500"}],
+                    "display": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "h1": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "700"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        @keyframes pulse-live {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        .animate-pulse-live {
+            animation: pulse-live 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        .glass-header {
+            background: rgba(252, 248, 250, 0.8);
+            backdrop-filter: blur(12px);
+        }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-background font-body-lg min-h-screen pb-24">
+<!-- TopAppBar -->
+<header class="glass-header fixed top-0 w-full z-50 border-b border-outline-variant">
+<div class="flex justify-between items-center w-full px-margin h-16 max-w-7xl mx-auto">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full overflow-hidden border border-outline-variant">
+<img alt="Participant Avatar" class="w-full h-full object-cover" data-alt="A high-quality professional portrait of a software engineer with short hair, wearing a dark minimal t-shirt. The background is a clean, neutral gray gradient with soft studio lighting, creating a professional and focused atmosphere. The image adheres to a minimalist, tech-forward aesthetic with sharp focus and natural skin tones." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBRMp2BEvAWcXF8IM-ySqy6e4oQcuVNNF5lQCEE1eoCxouTLbpAjktzzhc9sRj3BUTaKotah3bfmgwd4qu1cQKkX86-J-O1xTtxFGiEU1NkxiV39qLcvq4QdDxBJYV470OkxU66mGhc9H201uuXXYV6IDH2-Aq4xm5iJNs1A1XWy84Q2ceYiGIrdOPB8ZGmNI5fKXA_NgV0BGYThomcczs1xQH4r2ahOAkICrfuVQ8OzJo7jLHUly7yqqr3ijVrIEavjI6_qQSyN0CQ"/>
+</div>
+<span class="font-h1 text-h1 tracking-tighter text-on-background">GitSync</span>
+</div>
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-primary cursor-pointer active:scale-95 transition-transform">qr_code_scanner</span>
+</div>
+</div>
+</header>
+<main class="pt-20 px-margin max-w-7xl mx-auto">
+<!-- Timer Section -->
+<section class="mb-lg py-6 text-center border-b border-outline-variant">
+<div class="inline-flex items-center gap-2 mb-2">
+<span class="w-2 h-2 rounded-full bg-[#10B981] animate-pulse-live"></span>
+<span class="font-label-mono text-label-mono text-secondary uppercase tracking-widest">Live Game Session</span>
+</div>
+<h2 class="font-label-mono text-display tracking-tight text-primary tabular-nums">07:42</h2>
+<p class="font-label-mono text-label-mono text-secondary-fixed-dim">remaining</p>
+</section>
+<!-- Stats Split-Card (Asymmetric/Modern Layout) -->
+<section class="grid grid-cols-1 md:grid-cols-3 gap-gutter mb-lg">
+<div class="md:col-span-2 bg-surface-container-lowest border border-outline-variant p-margin flex justify-between items-center group hover:bg-white transition-colors duration-300">
+<div class="flex flex-col">
+<span class="font-label-mono text-label-mono text-on-secondary-container mb-1">NETWORK GROWTH</span>
+<div class="flex items-baseline gap-4">
+<span class="font-h1 text-h1 text-primary">Δ Followers: <span class="text-[#10B981]">+12</span></span>
+<span class="font-body-sm text-secondary-fixed-dim">/</span>
+<span class="font-h1 text-h1 text-primary">Following: <span class="text-[#10B981]">+4</span></span>
+</div>
+</div>
+<div class="hidden md:block">
+<span class="material-symbols-outlined text-outline-variant text-4xl group-hover:text-primary transition-colors">analytics</span>
+</div>
+</div>
+<div class="bg-primary text-white p-margin flex flex-col justify-center border border-primary">
+<span class="font-label-mono text-label-mono text-outline-variant mb-1">CURRENT SCORE</span>
+<span class="font-h1 text-h1 tracking-tighter">10.0</span>
+</div>
+</section>
+<!-- Leaderboard Feed -->
+<section>
+<div class="flex justify-between items-end mb-md">
+<h3 class="font-h2 text-h2">Leaderboard</h3>
+<span class="font-label-mono text-label-mono text-secondary">42 ACTIVE USERS</span>
+</div>
+<div class="space-y-0 border-t border-outline-variant">
+<!-- Row 1 -->
+<div class="flex items-center justify-between py-4 border-b border-outline-variant hover:bg-surface-container-low transition-colors px-2">
+<div class="flex items-center gap-md">
+<span class="font-label-mono text-label-mono w-4 text-secondary">01</span>
+<div class="relative">
+<img alt="Alex Rivers" class="w-10 h-10 rounded-full border border-outline-variant" data-alt="A sharp, detailed portrait of a developer with a modern hairstyle against a soft-focus studio background. The lighting is crisp and cool-toned, reflecting a high-performance tech environment. The color palette is monochromatic with deep grays and bright highlights, emphasizing a professional, minimalist SaaS aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCpU0Ng6qAb6E5P8cVT1PBWGQBbFnE-Wh7J4K8YX_wAXMINrNE8xou3IhD4q2fA0O-UHcfujyKG4pBW5Rb5nvS8Jj-Qnr9PGvT-deDB5krXpcSn88yenZW7-WKqNnBqbJMsDijmQkx6E213G1a5ooLHAwuf35mnOMLPHLnTl8YpML9AlPBcW_5r-maf6TFMzRYH9eM-Z6LJ6dZEIerqToMlyMeGnA4FYfRV8BnDpGXnGBmWW68WK3Wzh_nHx4Lz9X_QNGeIIYCP7YdQ"/>
+<div class="absolute -bottom-1 -right-1 w-4 h-4 bg-primary text-white rounded-full flex items-center justify-center border-2 border-background">
+<span class="material-symbols-outlined text-[10px]" style="font-variation-settings: 'FILL' 1;">star</span>
+</div>
+</div>
+<div>
+<p class="font-button text-primary leading-tight">alex_rivers</p>
+<p class="font-label-mono text-[10px] text-secondary uppercase tracking-tighter">Score: 98.4</p>
+</div>
+</div>
+<button class="h-9 px-4 border border-primary text-primary font-button hover:bg-primary hover:text-white transition-all active:scale-95 flex items-center gap-2 group" onclick="toggleFollow(this)">
+<span class="follow-text">+ Follow</span>
+<span class="material-symbols-outlined hidden text-sm group-[.followed]:block" style="font-variation-settings: 'FILL' 1;">check</span>
+</button>
+</div>
+<!-- Row 2 -->
+<div class="flex items-center justify-between py-4 border-b border-outline-variant hover:bg-surface-container-low transition-colors px-2">
+<div class="flex items-center gap-md">
+<span class="font-label-mono text-label-mono w-4 text-secondary">02</span>
+<img alt="Sarah Chen" class="w-10 h-10 rounded-full border border-outline-variant" data-alt="A vibrant professional headshot of a woman in a minimalist white studio. The lighting is bright and even, highlighting her friendly yet professional expression. The aesthetic is clean and modern, following a high-end corporate tech style with a neutral color palette and high contrast focus." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDqLGoSKic_7gQItdHbjNAkhAmZmcf4I2Hdqc5nH1NShj6HOSUbpAa9Wqmmba_YFXPJLQpc3A-c_A0c_CEl8hIbGbuJZPblB2S1c6Xo2n7757fPfQ4cSwn1kgGsdj35mJQgu4Yv6PiIaPyhA-KgVJAASZcApCZC7lf6hxKeMAevT6sNEuGsn81xT6Pdgt3VG09jy3pE7w0bkVYowaX06t6iGIBXK7ntBzm3J_F4fOg9bAWrbIx7d5vt-QE2CZqeCydqfTwD5QV82X0v"/>
+<div>
+<p class="font-button text-primary leading-tight">sarah_dev</p>
+<p class="font-label-mono text-[10px] text-secondary uppercase tracking-tighter">Score: 84.1</p>
+</div>
+</div>
+<button class="h-9 px-4 border border-primary text-primary font-button hover:bg-primary hover:text-white transition-all active:scale-95 flex items-center gap-2" onclick="toggleFollow(this)">
+<span class="follow-text">+ Follow</span>
+</button>
+</div>
+<!-- Row 3 -->
+<div class="flex items-center justify-between py-4 border-b border-outline-variant hover:bg-surface-container-low transition-colors px-2">
+<div class="flex items-center gap-md">
+<span class="font-label-mono text-label-mono w-4 text-secondary">03</span>
+<img alt="Jordan Smith" class="w-10 h-10 rounded-full border border-outline-variant" data-alt="A portrait of a male tech professional with a clean, groomed beard and glasses, looking directly at the camera with confidence. The background is a soft, blurred workspace in cool blue and gray tones. The visual style is crisp and professional, capturing a modern SaaS-clean vibe with high-quality digital photography." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBPmIdDZeXa2GqKIgXrG-YhBiD73-LJShV92IrA3oguxMvKn2QgBrEZEzpCw56bYoBqJBfZ4SiOHSMC6YjtDFoF9XyW4h-lAzRhBjft8lJe65fEXo4pI47rrtYXGyq5B9KrFAg7IvQkPn9tHqEKXmVPEe8hPqovTMjQ3DYBEiCtdfDh9_FsTE-aC6yFq3i_JTI3d8RBouwljMIq5GkqkpBBc1-Qck79XMuXot4nGtRItNXTHiZ8_yGFmVMkXDJBJs51034Ryx-FWJkm"/>
+<div>
+<p class="font-button text-primary leading-tight">j_smith</p>
+<p class="font-label-mono text-[10px] text-secondary uppercase tracking-tighter">Score: 72.8</p>
+</div>
+</div>
+<button class="h-9 px-4 border border-primary text-primary font-button hover:bg-primary hover:text-white transition-all active:scale-95 flex items-center gap-2" onclick="toggleFollow(this)">
+<span class="follow-text">+ Follow</span>
+</button>
+</div>
+<!-- Row 4 -->
+<div class="flex items-center justify-between py-4 border-b border-outline-variant hover:bg-surface-container-low transition-colors px-2 bg-surface-container-low">
+<div class="flex items-center gap-md">
+<span class="font-label-mono text-label-mono w-4 text-primary font-bold">14</span>
+<img alt="You" class="w-10 h-10 rounded-full border-2 border-primary" data-alt="A minimalist professional portrait of a young tech innovator. The lighting is soft and directional, creating a sense of depth and focus. The background is a flat, clean light-gray. The overall aesthetic is monochromatic and high-end, fitting a developer-centric software platform where clarity and precision are prioritized." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDLlGgMe3DZvYSluUJQousQdMGClrRMz1lKpspg9JJL8l6KiF_UCgdKiAd76c-MhpvD0yR_K2s3xeWUy_me_7mZWT_9xV4LMDybKSbmDwiYtpRM1wFzWvr6Uw0M6qEjwzkh0vKFotTX0w-hQPf1VwnBTH5SnldueDSTt5inLhwLQxLqtigZjiAxXP4SKN-5WNS6FaKt8TvZI_8sVhkSnMGIMXKEx3cs3GYOm5hELDFclyXONdDimXNubfxDX4zfafr4TcSiUN050x2l"/>
+<div>
+<p class="font-button text-primary leading-tight">you <span class="font-label-mono text-[10px] bg-primary text-white px-1 ml-1">YOU</span></p>
+<p class="font-label-mono text-[10px] text-secondary uppercase tracking-tighter">Score: 10.0</p>
+</div>
+</div>
+<span class="font-label-mono text-label-mono text-outline">CURRENTLY PLAYING</span>
+</div>
+</div>
+</section>
+</main>
+<!-- FAB: Circular Scan Button -->
+<button class="fixed bottom-24 right-margin w-14 h-14 bg-primary text-white rounded-full flex items-center justify-center shadow-lg active:scale-90 transition-transform z-50 border-4 border-background">
+<span class="material-symbols-outlined text-2xl">center_focus_weak</span>
+</button>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-gutter py-2 pb-safe bg-surface border-t border-outline-variant">
+<div class="flex flex-col items-center justify-center text-secondary hover:text-primary transition-colors cursor-pointer active:opacity-80">
+<span class="material-symbols-outlined">rss_feed</span>
+<span class="font-label-mono text-label-mono">Feed</span>
+</div>
+<div class="flex flex-col items-center justify-center text-primary font-bold cursor-pointer active:opacity-80">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">leaderboard</span>
+<span class="font-label-mono text-label-mono">Leaderboard</span>
+</div>
+<div class="flex flex-col items-center justify-center text-secondary hover:text-primary transition-colors cursor-pointer active:opacity-80">
+<span class="material-symbols-outlined">center_focus_weak</span>
+<span class="font-label-mono text-label-mono">Scan</span>
+</div>
+<div class="flex flex-col items-center justify-center text-secondary hover:text-primary transition-colors cursor-pointer active:opacity-80">
+<span class="material-symbols-outlined">person</span>
+<span class="font-label-mono text-label-mono">Profile</span>
+</div>
+</nav>
+<script>
+        function toggleFollow(btn) {
+            const text = btn.querySelector('.follow-text');
+            const isFollowed = btn.classList.contains('bg-primary');
+            
+            if (!isFollowed) {
+                btn.classList.add('bg-primary', 'text-white', 'followed');
+                text.textContent = 'Following';
+                // Add checkmark if not already there
+                if (!btn.querySelector('.material-symbols-outlined')) {
+                    const icon = document.createElement('span');
+                    icon.className = 'material-symbols-outlined text-sm';
+                    icon.style.fontVariationSettings = "'FILL' 1";
+                    icon.textContent = 'check';
+                    btn.appendChild(icon);
+                }
+            } else {
+                btn.classList.remove('bg-primary', 'text-white', 'followed');
+                text.textContent = '+ Follow';
+                const icon = btn.querySelector('.material-symbols-outlined');
+                if (icon) icon.remove();
+            }
+        }
+
+        // Lightweight timer update
+        let seconds = 462; // 07:42
+        const timerEl = document.querySelector('h2.tabular-nums');
+        
+        setInterval(() => {
+            if (seconds > 0) {
+                seconds--;
+                const mins = Math.floor(seconds / 60);
+                const secs = seconds % 60;
+                timerEl.textContent = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+            }
+        }, 1000);
+    </script>
+</body></html>
+
+<!-- Design System -->
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@500&amp;family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&amp;family=JetBrains+Mono:wght@100..900&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-background": "#1b1b1d",
+                    "outline-variant": "#c6c6cd",
+                    "surface-container-lowest": "#ffffff",
+                    "on-error": "#ffffff",
+                    "primary-container": "#131b2e",
+                    "secondary-fixed-dim": "#b7c8e1",
+                    "surface-tint": "#565e74",
+                    "error-container": "#ffdad6",
+                    "on-primary-fixed-variant": "#3f465c",
+                    "outline": "#76777d",
+                    "on-secondary-fixed": "#0b1c30",
+                    "on-secondary-fixed-variant": "#38485d",
+                    "error": "#ba1a1a",
+                    "tertiary-container": "#271901",
+                    "on-surface": "#1b1b1d",
+                    "on-secondary-container": "#54647a",
+                    "on-tertiary-fixed": "#271901",
+                    "surface-container": "#f0edef",
+                    "on-error-container": "#93000a",
+                    "on-tertiary": "#ffffff",
+                    "surface-dim": "#dcd9db",
+                    "inverse-primary": "#bec6e0",
+                    "inverse-on-surface": "#f3f0f2",
+                    "primary-fixed-dim": "#bec6e0",
+                    "tertiary-fixed": "#fcdeb5",
+                    "surface-container-low": "#f6f3f5",
+                    "on-primary-fixed": "#131b2e",
+                    "secondary-fixed": "#d3e4fe",
+                    "primary": "#000000",
+                    "surface": "#fcf8fa",
+                    "on-primary": "#ffffff",
+                    "secondary-container": "#d0e1fb",
+                    "on-tertiary-container": "#98805d",
+                    "inverse-surface": "#303032",
+                    "background": "#fcf8fa",
+                    "on-primary-container": "#7c839b",
+                    "tertiary": "#000000",
+                    "on-tertiary-fixed-variant": "#574425",
+                    "tertiary-fixed-dim": "#dec29a",
+                    "surface-container-high": "#eae7e9",
+                    "on-secondary": "#ffffff",
+                    "on-surface-variant": "#45464d",
+                    "primary-fixed": "#dae2fd",
+                    "secondary": "#505f76",
+                    "surface-bright": "#fcf8fa",
+                    "surface-variant": "#e4e2e4",
+                    "surface-container-highest": "#e4e2e4"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.125rem",
+                    "lg": "0.25rem",
+                    "xl": "0.5rem",
+                    "full": "0.75rem"
+            },
+            "spacing": {
+                    "md": "16px",
+                    "xl": "32px",
+                    "margin": "20px",
+                    "sm": "8px",
+                    "base": "4px",
+                    "xs": "4px",
+                    "lg": "24px",
+                    "gutter": "16px"
+            },
+            "fontFamily": {
+                    "body-lg": ["Inter"],
+                    "button": ["Inter"],
+                    "body-sm": ["Inter"],
+                    "h2": ["Inter"],
+                    "label-mono": ["JetBrains Mono"],
+                    "display": ["Inter"],
+                    "h1": ["Inter"]
+            },
+            "fontSize": {
+                    "body-lg": ["16px", {"lineHeight": "24px", "letterSpacing": "0.01em", "fontWeight": "400"}],
+                    "button": ["14px", {"lineHeight": "20px", "letterSpacing": "0.02em", "fontWeight": "600"}],
+                    "body-sm": ["14px", {"lineHeight": "20px", "letterSpacing": "0px", "fontWeight": "400"}],
+                    "h2": ["20px", {"lineHeight": "28px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                    "label-mono": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "500"}],
+                    "display": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "h1": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "700"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            display: inline-block;
+            line-height: 1;
+            text-transform: none;
+            letter-spacing: normal;
+            word-wrap: normal;
+            white-space: nowrap;
+            direction: ltr;
+        }
+        .podium-gradient {
+            background: linear-gradient(180deg, rgba(240, 237, 239, 0) 0%, rgba(240, 237, 239, 1) 100%);
+        }
+        .confetti-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 10;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-background font-body-lg min-h-screen flex flex-col">
+<!-- Top App Bar (Shared Component) -->
+<header class="bg-background dark:bg-background border-b border-outline-variant dark:border-outline flex justify-between items-center w-full px-margin h-16 max-w-7xl mx-auto z-50">
+<div class="flex items-center gap-md">
+<div class="w-10 h-10 rounded-full overflow-hidden border border-outline-variant">
+<img alt="Participant Avatar" class="w-full h-full object-cover" data-alt="A professional studio headshot of a software engineer with a neutral background. The lighting is soft and even, adhering to a minimalist and clean SaaS aesthetic. The color palette is monochromatic with subtle cool tones, reflecting a precise and reliable developer identity." src="https://lh3.googleusercontent.com/aida-public/AB6AXuC-zjzupA1VQJVGs34M6R9EK7j9q-f90eT9zjaSDcHtVhUzdK18QEVXm6YBIp7_fymEJOnlg5IHy_S6YVjAvyO5nk8s-bIHpgGYcAAACJzHnrq_hBHD-n0RRH4NFhGCYGa46dwOtJXBra3SSewuba9mg6c-3ToJMGfFpa4FT8jrLRu-Of6S6Gm1lEY4gp968rzmSIdbY8QuT0BBwXMElRAiUN8ewRtVmpyRacc13piGmrL0Ih8L_xIqDN4Gel9saYHcmatZws5R5joL"/>
+</div>
+<h1 class="font-h1 text-h1 tracking-tighter text-on-background dark:text-on-background">GitSync</h1>
+</div>
+<div class="flex items-center gap-md">
+<button class="material-symbols-outlined text-primary dark:text-primary hover:bg-surface-container-high transition-colors p-2 rounded-full">qr_code_scanner</button>
+</div>
+</header>
+<main class="flex-grow flex flex-col max-w-7xl mx-auto w-full px-margin py-lg relative overflow-hidden">
+<canvas class="confetti-canvas" id="confetti"></canvas>
+<!-- Concluded Header -->
+<section class="text-center mb-xl">
+<span class="font-label-mono text-label-mono text-secondary uppercase tracking-widest mb-sm block">Session Complete</span>
+<h2 class="font-display text-display">Match Concluded. The Winners:</h2>
+</section>
+<!-- Podium Section (Bento Style) -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-gutter items-end mb-xl">
+<!-- 2nd Place -->
+<div class="order-2 md:order-1 flex flex-col items-center">
+<div class="mb-md text-center">
+<div class="relative inline-block">
+<img class="w-20 h-20 rounded-full border-2 border-outline-variant object-cover mb-sm" data-alt="A portrait of a male developer in a clean office setting with modern glass partitions. High-contrast lighting highlights the sharp features, while the color palette remains neutral and focused, embodying a high-performance software tool aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDOvRCiaCG64GjvHycx_Jkn531OqDMk6McNnm7Pyybw-_w69dAhvf0NAjbkIBEJuzLBQ_zbny6SuyN4oX_HZ6B7T3RKKNzg9PB8Ft_avCSOhTA-bolWvN4xKKVcHafRCpSAhR4BPjggqx8xtWmle2FxjmvgcL6YcUeN1ZFdBGZd4umFMUMQAiWRwQF3hZUvJELKuzVDeeYzX6PeaUi7Dq58J6L3Ju9YUkJQI9dj_HTnPiPm8EP35PddND1wnw7aEyR8Een6RdbRMnby"/>
+<div class="absolute -top-2 -right-2 bg-surface-container-highest border border-outline px-2 py-0.5 rounded-full font-label-mono text-label-mono">2</div>
+</div>
+<p class="font-h2 text-h2">alex_dev</p>
+<p class="font-label-mono text-label-mono text-secondary">2,450 COMMITS</p>
+</div>
+<div class="w-full h-32 bg-surface-container border border-outline-variant flex items-center justify-center">
+<span class="font-display text-display opacity-10">🥈</span>
+</div>
+</div>
+<!-- 1st Place -->
+<div class="order-1 md:order-2 flex flex-col items-center">
+<div class="mb-md text-center transform scale-110">
+<div class="relative inline-block">
+<div class="absolute -inset-1 bg-primary rounded-full blur-sm opacity-20"></div>
+<img class="w-28 h-28 rounded-full border-4 border-primary object-cover mb-sm relative z-10" data-alt="A sleek professional portrait of a female lead engineer with a tech-focused, minimalist background. The lighting is sophisticated and directional, creating deep blacks and crisp whites. The mood is authoritative yet quiet and reliable, perfectly matching the SaaS-clean brand." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCQmEzUvHlKwJFAor-wX1gX_57o54jpcigkdoO1zEOcZrJyzSoICw-MmsgGrgMzRspXqgO_CoFUyRz5fiyGUrB9YbKK4B4kC3gYBJq-lZjKuDiuoAUmPKkPf1TxnSjOGMvf7AgSz-oHiyN1lRGGk51NaNxkaqd0q1sqGvMcVTS8J4ZkSsn5VSKdmAwpiHAHJwAESOSqFzGgrGGVLyve5hNKrkJbvfkDVxrJxAj0G2Anb8ax-GjazGUaC-oCXkjDjFu-CSs6XyU_TcEh"/>
+<div class="absolute -top-3 -right-3 bg-primary text-white px-3 py-1 rounded-full font-label-mono text-label-mono z-20">1</div>
+</div>
+<p class="font-h1 text-h1 font-extrabold text-primary">sarah_codes</p>
+<div class="flex items-center justify-center gap-xs">
+<span class="material-symbols-outlined text-[#10B981] text-[18px]" style="font-variation-settings: 'FILL' 1;">stars</span>
+<p class="font-label-mono text-label-mono font-bold text-primary">3,120 NET SCORE</p>
+</div>
+</div>
+<div class="w-full h-48 bg-primary border border-primary flex flex-col items-center justify-center">
+<span class="font-display text-display text-white mb-2">🥇</span>
+<div class="h-1 w-12 bg-white/20 rounded-full"></div>
+</div>
+</div>
+<!-- 3rd Place -->
+<div class="order-3 md:order-3 flex flex-col items-center">
+<div class="mb-md text-center">
+<div class="relative inline-block">
+<img class="w-16 h-16 rounded-full border-2 border-outline-variant object-cover mb-sm" data-alt="A portrait of a male systems architect in a minimalist environment with industrial lighting. The aesthetic is monochromatic and sharp, prioritizing content and utility. The mood is serene and focused, evoking a sense of speed and absolute clarity." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAE2kepnUVDWpTM62qJItGisUM-kgPGkC6WFTogJ8JWc2DxCWnp4JYhKBaZPCjCL-1j6L73fwgJ3I-RZHXn5vUX0oAQXqP0R72w9N6V3Uta5oyQTwYVFfKIMeorf8gw2YnkTyN7_i4azMYU_WgQQasu6esFx3jpGcYKvTtweafeq3o7NdKUzBPcG9FaTkzflZBIRWXct9vmF-ym1NnoeZCYergT4smvr3_ivwzSH18tP6zf6kvnu6eOgZHqGt2GWKoZ8ArYrAO_ffDW"/>
+<div class="absolute -top-2 -right-2 bg-surface-container-high border border-outline px-2 py-0.5 rounded-full font-label-mono text-label-mono">3</div>
+</div>
+<p class="font-h2 text-h2">dev_ninja</p>
+<p class="font-label-mono text-label-mono text-secondary">1,890 COMMITS</p>
+</div>
+<div class="w-full h-24 bg-surface-container-low border border-outline-variant flex items-center justify-center">
+<span class="font-display text-display opacity-10">🥉</span>
+</div>
+</div>
+</div>
+<!-- Secondary List (Rank 4-10) -->
+<section class="mb-xl max-w-2xl mx-auto w-full">
+<h3 class="font-label-mono text-label-mono text-secondary uppercase mb-md px-md">Remaining Ranks</h3>
+<div class="bg-surface-container-lowest border border-outline-variant overflow-hidden">
+<div class="divide-y divide-outline-variant">
+<div class="flex items-center justify-between p-md hover:bg-surface-container-high transition-colors">
+<div class="flex items-center gap-md">
+<span class="font-label-mono text-label-mono text-secondary w-4 text-center">4</span>
+<span class="font-body-lg text-body-lg font-medium">octo_man</span>
+</div>
+<span class="font-label-mono text-label-mono">1,420</span>
+</div>
+<div class="flex items-center justify-between p-md hover:bg-surface-container-high transition-colors">
+<div class="flex items-center gap-md">
+<span class="font-label-mono text-label-mono text-secondary w-4 text-center">5</span>
+<span class="font-body-lg text-body-lg font-medium">lambda_king</span>
+</div>
+<span class="font-label-mono text-label-mono">1,250</span>
+</div>
+<div class="flex items-center justify-between p-md hover:bg-surface-container-high transition-colors">
+<div class="flex items-center gap-md">
+<span class="font-label-mono text-label-mono text-secondary w-4 text-center">6</span>
+<span class="font-body-lg text-body-lg font-medium">pixel_pirate</span>
+</div>
+<span class="font-label-mono text-label-mono">980</span>
+</div>
+<div class="flex items-center justify-between p-md hover:bg-surface-container-high transition-colors">
+<div class="flex items-center gap-md">
+<span class="font-label-mono text-label-mono text-secondary w-4 text-center">7</span>
+<span class="font-body-lg text-body-lg font-medium">git_gud</span>
+</div>
+<span class="font-label-mono text-label-mono">840</span>
+</div>
+</div>
+</div>
+</section>
+<!-- Footer Actions -->
+<footer class="mt-auto pt-xl border-t border-outline-variant flex flex-col items-center gap-md">
+<button class="w-full max-w-md h-12 bg-primary text-white font-button rounded border border-primary hover:opacity-90 active:scale-[0.98] transition-all flex items-center justify-center gap-sm shadow-sm">
+<span class="material-symbols-outlined text-[20px]">sync_alt</span>
+                Export Network to GitHub
+            </button>
+<button class="font-button text-secondary hover:text-primary transition-colors py-2 active:opacity-50">
+                Leave Room
+            </button>
+</footer>
+</main>
+<!-- Bottom Nav Bar (Shared Component) -->
+<nav class="fixed bottom-0 left-0 w-full z-50 bg-surface dark:bg-surface-dim border-t border-outline-variant dark:border-outline flex justify-around items-center px-gutter py-2 pb-safe">
+<a class="flex flex-col items-center justify-center text-secondary dark:text-secondary-fixed-dim hover:text-primary dark:hover:text-primary-fixed active:opacity-80 transition-all" href="#">
+<span class="material-symbols-outlined">rss_feed</span>
+<span class="font-label-mono text-label-mono">Feed</span>
+</a>
+<a class="flex flex-col items-center justify-center text-primary dark:text-primary font-bold hover:text-primary dark:hover:text-primary-fixed active:opacity-80 transition-all" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">leaderboard</span>
+<span class="font-label-mono text-label-mono">Leaderboard</span>
+</a>
+<a class="flex flex-col items-center justify-center text-secondary dark:text-secondary-fixed-dim hover:text-primary dark:hover:text-primary-fixed active:opacity-80 transition-all" href="#">
+<span class="material-symbols-outlined">center_focus_weak</span>
+<span class="font-label-mono text-label-mono">Scan</span>
+</a>
+<a class="flex flex-col items-center justify-center text-secondary dark:text-secondary-fixed-dim hover:text-primary dark:hover:text-primary-fixed active:opacity-80 transition-all" href="#">
+<span class="material-symbols-outlined">person</span>
+<span class="font-label-mono text-label-mono">Profile</span>
+</a>
+</nav>
+<script>
+        // Simple Confetti Micro-interaction
+        const canvas = document.getElementById('confetti');
+        const ctx = canvas.getContext('2d');
+        let particles = [];
+
+        function resize() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+
+        class Particle {
+            constructor() {
+                this.x = Math.random() * canvas.width;
+                this.y = Math.random() * canvas.height - canvas.height;
+                this.size = Math.random() * 6 + 2;
+                this.speed = Math.random() * 3 + 1;
+                this.angle = Math.random() * 360;
+                this.spin = Math.random() * 10 - 5;
+                this.color = ['#0F172A', '#10B981', '#E2E8F0'][Math.floor(Math.random() * 3)];
+            }
+            update() {
+                this.y += this.speed;
+                this.angle += this.spin;
+                if (this.y > canvas.height) {
+                    this.y = -20;
+                    this.x = Math.random() * canvas.width;
+                }
+            }
+            draw() {
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                ctx.rotate(this.angle * Math.PI / 180);
+                ctx.fillStyle = this.color;
+                ctx.fillRect(-this.size/2, -this.size/2, this.size, this.size);
+                ctx.restore();
+            }
+        }
+
+        function init() {
+            resize();
+            for (let i = 0; i < 50; i++) {
+                particles.push(new Particle());
+            }
+            animate();
+        }
+
+        function animate() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            particles.forEach(p => {
+                p.update();
+                p.draw();
+            });
+            requestAnimationFrame(animate);
+        }
+
+        window.addEventListener('resize', resize);
+        init();
+    </script>
+</body></html>
