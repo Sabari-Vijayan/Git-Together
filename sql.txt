@@ -97,9 +97,9 @@ BEGIN
   WHERE user_id = NEW.followee_id AND room_id = NEW.room_id;
 
   -- Recalculate scores for BOTH participants in the room
-  -- Score = Δ Followers - 0.5 * Δ Following
+  -- Score = 0.5 * Δ Followers + 1.0 * Δ Following
   UPDATE room_participants
-  SET score = (current_followers - baseline_followers) - 0.5 * (current_following - baseline_following)
+  SET score = 0.5 * (current_followers - baseline_followers) + 1.0 * (current_following - baseline_following)
   WHERE (user_id = NEW.follower_id OR user_id = NEW.followee_id) AND room_id = NEW.room_id;
 
   RETURN NEW;

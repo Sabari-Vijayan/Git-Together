@@ -119,6 +119,39 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   transition: background-color var(--transition-normal), color var(--transition-normal);
+  position: relative;
+}
+
+/* Blending background images for Mobile and PC */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  opacity: 0.06; /* slight opacity merely blending in */
+  pointer-events: none;
+  transition: background-image var(--transition-normal), opacity var(--transition-normal);
+}
+
+/* Mobile Background */
+@media (max-width: 768px) {
+  body::before {
+    background-image: url('/backgroundimage.jpeg');
+  }
+}
+
+/* PC Background */
+@media (min-width: 769px) {
+  body::before {
+    background-image: url('/bgimagebutforpc.jpeg');
+  }
+}
+
+html.dark body::before {
+  opacity: 0.03; /* slightly dimmer in dark mode for better contrast */
 }
 
 #root {
@@ -1573,4 +1606,90 @@ html.dark .stats-card-points {
 html.dark .marquee-ticker {
   background-color: var(--color-neon-pink);
   border-bottom: 2px solid #ffffff;
+}
+
+
+/* Premium Cyber-Manga Loader */
+.initial-loader {
+  position: fixed;
+  inset: 0;
+  background-color: #0c0c0e;
+  z-index: 999;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.8s cubic-bezier(0.85, 0, 0.15, 1), opacity 0.8s ease;
+  pointer-events: all;
+  overflow: hidden;
+}
+
+.initial-loader.fade-out {
+  transform: translateY(-100%);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.loader-terminal {
+  font-family: var(--font-mono);
+  color: var(--color-neon-pink);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  align-items: center;
+  text-shadow: 0 0 10px rgba(242, 74, 199, 0.3);
+}
+
+.loader-logo {
+  font-size: 40px;
+  font-weight: 900;
+  letter-spacing: -2px;
+  text-transform: uppercase;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.loader-logo-spin {
+  animation: logo-spin 1.5s cubic-bezier(0.68, -0.6, 0.32, 1.6) infinite;
+  display: inline-block;
+  color: var(--color-neon-pink);
+}
+
+@keyframes logo-spin {
+  0% { transform: rotate(0deg) scale(1); }
+  50% { transform: rotate(180deg) scale(1.1); }
+  100% { transform: rotate(360deg) scale(1); }
+}
+
+.loader-progress-bar-container {
+  width: 240px;
+  height: 8px;
+  border: 2px solid #ffffff;
+  background-color: rgba(255, 255, 255, 0.1);
+  padding: 1px;
+  position: relative;
+  box-shadow: 4px 4px 0px var(--color-neon-pink);
+}
+
+.loader-progress-bar-fill {
+  height: 100%;
+  background-color: var(--color-neon-green);
+  transition: width 0.05s linear;
+}
+
+.loader-percentage {
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: #ffffff;
+}
+
+.loader-subtitle {
+  font-size: 9px;
+  color: #a1a1aa;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  margin-top: 8px;
 }

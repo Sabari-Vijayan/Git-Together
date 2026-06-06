@@ -1,0 +1,27 @@
+-- =========================================================================
+-- GIT-TOGETHER SCORING UPDATE SCRIPT
+-- Paste this script directly into the Supabase SQL Editor to update your scoring logic.
+-- =========================================================================
+
+CREATE OR REPLACE FUNCTION handle_follow_ledger_insert()
+RETURNS TRIGGER AS $$
+BEGIN
+  -- Increment following count of the follower in this room
+  UPDATE room_participants
+  SET current_following = current_following + 1
+  WHERE user_id = NEW.follower_id AND room_id = NEW.room_id;
+
+  -- Increment followers count of the followee in this room
+  UPDATE room_participants
+  SET current_followers = current_followers + 1
+  WHERE user_id = NEW.followee_id AND room_id = NEW.room_id;
+
+  -- Recalculate scores for BOTH participants in the room:
+  -- Score = 0.5 * Δ Followers + 1.0 * Δ Following
+  UPDATE room_participants
+  SET score = 0.5 * (current_followers - baseline_followers) + 1.0 * (current_following - baseline_following)
+  WHERE (user_id = NEW.follower_id OR user_id = NEW.followee_id) AND room_id = NEW.room_id;
+
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;

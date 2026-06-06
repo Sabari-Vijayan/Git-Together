@@ -126,6 +126,10 @@ export default function App() {
   const [selectedPeer, setSelectedPeer] = useState<Participant | null>(null);
   const [showToast, setShowToast] = useState<string | null>(null);
   const [isDarkMode, setIsDarkMode] = useState<boolean>(false);
+  const [showStartPopup, setShowStartPopup] = useState<boolean>(false);
+  const [startCountdown, setStartCountdown] = useState<number>(5);
+  const [initLoading, setInitLoading] = useState<boolean>(true);
+  const [initProgress, setInitProgress] = useState<number>(0);
   
   // Activity/Event feed log
   const [syncLogs, setSyncLogs] = useState<SyncLog[]>([]);
@@ -198,6 +202,54 @@ export default function App() {
       if (interval) clearInterval(interval);
     };
   }, [screen, roomStatus]);
+
+  // Start countdown handler
+  useEffect(() => {
+    let interval: any = null;
+    if (showStartPopup && startCountdown > 0) {
+      interval = setInterval(() => {
+        setStartCountdown((prev) => {
+          if (prev <= 1) {
+            clearInterval(interval);
+            setShowStartPopup(false);
+            setScreen('game');
+            setActiveTab('leaderboard');
+            triggerToast('The session has started!');
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    }
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [showStartPopup, startCountdown]);
+
+  // Initial Loader Progress Simulation Effect
+  useEffect(() => {
+    let timerId: any = null;
+    if (initLoading) {
+      timerId = setInterval(() => {
+        setInitProgress((prev) => {
+          if (prev >= 100) {
+            clearInterval(timerId);
+            // Wait slightly before hiding to show 100% and run transition
+            setTimeout(() => {
+              setInitLoading(false);
+            }, 800);
+            return 100;
+          }
+          // Increment progress randomly between 5 and 15 for a natural loader feel
+          const step = Math.floor(Math.random() * 10) + 5;
+          return Math.min(100, prev + step);
+        });
+      }, 80);
+    }
+    return () => {
+      if (timerId) clearInterval(timerId);
+    };
+  }, [initLoading]);
 
   // Supabase Auth Session Listener
   useEffect(() => {
@@ -344,60 +396,69 @@ export default function App() {
     // Fetch initial list of participants
     fetchRoomParticipants();
 
-    // Subscribe to changes
+    // Subscribe to changes without server-side UUID filter to avoid Supabase Realtime parser glitches
     const channel = supabase
-      .channel(`room:${roomId}`)
+      .channel(`room-channel-${roomId}`)
       .on(
         'postgres_changes',
-        { event: '*', schema: 'public', table: 'rooms', filter: `id=eq.${roomId}` },
+        { event: '*', schema: 'public', table: 'rooms' },
         (payload: any) => {
-          const newStatus = payload.new?.status;
-          const endsAt = payload.new?.ends_at;
-          if (newStatus) {
-            setRoomStatus(newStatus);
-            if (newStatus === 'active') {
-              if (endsAt) {
-                const remaining = Math.max(0, Math.floor((new Date(endsAt).getTime() - Date.now()) / 1000));
-                setTimer(remaining);
+          const changedRoom = payload.new || payload.old;
+          if (changedRoom && changedRoom.id === roomId) {
+            const newStatus = changedRoom.status;
+            const endsAt = changedRoom.ends_at;
+            if (newStatus) {
+              setRoomStatus(newStatus);
+              if (newStatus === 'active') {
+                if (endsAt) {
+                  const remaining = Math.max(0, Math.floor((new Date(endsAt).getTime() - Date.now()) / 1000));
+                  setTimer(remaining);
+                }
+                
+                // Show the 5, 4, 3, 2, 1 instructions countdown instead of jumping straight to game
+                setStartCountdown(5);
+                setShowStartPopup(true);
+                
+                // Log start event
+                const startLog: SyncLog = {
+                  id: Math.random().toString(),
+                  message: 'Game session started by organizer',
+                  timestamp: new Date().toLocaleTimeString(),
+                  type: 'success'
+                };
+                setSyncLogs((prev) => [startLog, ...prev]);
+              } else if (newStatus === 'concluded') {
+                fetchRoomParticipants();
+                setScreen('concluded');
+                triggerToast('Game Concluded! Checking podium...');
+                
+                // Log conclude event
+                const endLog: SyncLog = {
+                  id: Math.random().toString(),
+                  message: 'Match concluded! Final scores calculated.',
+                  timestamp: new Date().toLocaleTimeString(),
+                  type: 'success'
+                };
+                setSyncLogs((prev) => [endLog, ...prev]);
               }
-              setScreen('game');
-              setActiveTab('leaderboard');
-              triggerToast('The session has started!');
-              
-              // Log start event
-              const startLog: SyncLog = {
-                id: Math.random().toString(),
-                message: 'Game session started by organizer',
-                timestamp: new Date().toLocaleTimeString(),
-                type: 'success'
-              };
-              setSyncLogs((prev) => [startLog, ...prev]);
-            } else if (newStatus === 'concluded') {
-              fetchRoomParticipants();
-              setScreen('concluded');
-              triggerToast('Game Concluded! Checking podium...');
-              
-              // Log conclude event
-              const endLog: SyncLog = {
-                id: Math.random().toString(),
-                message: 'Match concluded! Final scores calculated.',
-                timestamp: new Date().toLocaleTimeString(),
-                type: 'success'
-              };
-              setSyncLogs((prev) => [endLog, ...prev]);
             }
           }
         }
       )
       .on(
         'postgres_changes',
-        { event: '*', schema: 'public', table: 'room_participants', filter: `room_id=eq.${roomId}` },
-        () => {
-          // Refresh participants list when any participant updates or new players join
-          fetchRoomParticipants();
+        { event: '*', schema: 'public', table: 'room_participants' },
+        (payload: any) => {
+          const changedPart = payload.new || payload.old;
+          if (changedPart && changedPart.room_id === roomId) {
+            // Refresh participants list when any participant updates or new players join
+            fetchRoomParticipants();
+          }
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        console.log(`Supabase Realtime subscription status: ${status}`);
+      });
 
     return () => {
       supabase?.removeChannel(channel);
@@ -876,9 +937,8 @@ export default function App() {
         }))
       );
       setTimer(462);
-      setScreen('game');
-      setActiveTab('leaderboard');
-      triggerToast('Organizer started the session! Time to connect!');
+      setStartCountdown(5);
+      setShowStartPopup(true);
     }
   };
 
@@ -918,7 +978,7 @@ export default function App() {
           const newFollowing = p.current_following + extraFollowing;
           const deltaFollowers = newFollowers - p.baseline_followers;
           const deltaFollowing = newFollowing - p.baseline_following;
-          const score = deltaFollowers - 0.5 * deltaFollowing;
+          const score = 0.5 * deltaFollowers + 1.0 * deltaFollowing;
 
           return {
             ...p,
@@ -994,6 +1054,26 @@ export default function App() {
 
   return (
     <>
+      {/* Premium Initial Loader Overlay */}
+      {initProgress < 100 || initLoading ? (
+        <div className={`initial-loader ${initProgress === 100 ? 'fade-out' : ''}`}>
+          <div className="loader-terminal">
+            <div className="loader-logo">
+              <span className="loader-logo-spin">⚡</span>
+              <span>Git-Together</span>
+            </div>
+            <div className="loader-progress-bar-container">
+              <div 
+                className="loader-progress-bar-fill" 
+                style={{ width: `${initProgress}%` }}
+              ></div>
+            </div>
+            <div className="loader-percentage">{initProgress}%</div>
+            <div className="loader-subtitle">Loading Dev System</div>
+          </div>
+        </div>
+      ) : null}
+
       {/* Global Marquee Ticker */}
       <div className="marquee-ticker">
         <div className="marquee-content">
@@ -1005,6 +1085,80 @@ export default function App() {
           <span className="marquee-item">SYNCING REAL-TIME GITHUB FOLLOWERS</span>
         </div>
       </div>
+
+      {/* START COUNTDOWN POPUP */}
+      {showStartPopup && (
+        <div className="modal-overlay" style={{ zIndex: 200, backgroundColor: 'rgba(0, 0, 0, 0.9)' }}>
+          <div 
+            className="modal-content fade-in" 
+            style={{ 
+              maxWidth: '500px', 
+              textAlign: 'center', 
+              border: '3px solid var(--color-neon-pink)',
+              boxShadow: '10px 10px 0px var(--color-primary)',
+              borderRadius: '4px',
+              padding: '40px var(--space-xl)'
+            }}
+          >
+            <div style={{ marginBottom: '24px' }}>
+              <span className="font-label-mono text-accent tracking-widest uppercase" style={{ fontSize: '12px' }}>
+                GET READY // SESSION STARTING IN
+              </span>
+              <div 
+                style={{ 
+                  fontSize: '120px', 
+                  fontWeight: '900', 
+                  fontFamily: 'var(--font-mono)',
+                  color: 'var(--color-neon-pink)',
+                  lineHeight: '1',
+                  margin: '10px 0',
+                  textShadow: '4px 4px 0px var(--color-primary)'
+                }}
+              >
+                {startCountdown}
+              </div>
+            </div>
+
+            <div className="divider-line" style={{ margin: '20px 0' }}></div>
+
+            <div style={{ textAlign: 'left', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <h3 className="font-h2 text-primary text-center uppercase font-mono" style={{ color: 'var(--color-accent)', fontWeight: '800' }}>
+                Match Instructions
+              </h3>
+              
+              <div className="explanation-step" style={{ gap: '12px', alignItems: 'flex-start' }}>
+                <span className="material-symbols-outlined text-accent" style={{ fontSize: '24px', flexShrink: 0 }}>link</span>
+                <div className="step-details">
+                  <h4 className="font-body-lg font-bold" style={{ fontWeight: '700', fontSize: '15px' }}>1. Exchange Follows</h4>
+                  <p className="font-body-sm" style={{ fontSize: '13px', color: 'var(--color-secondary)' }}>
+                    Open peers' profiles from the leaderboard and follow them manually on GitHub.
+                  </p>
+                </div>
+              </div>
+
+              <div className="explanation-step" style={{ gap: '12px', alignItems: 'flex-start' }}>
+                <span className="material-symbols-outlined text-accent" style={{ fontSize: '24px', flexShrink: 0 }}>add_task</span>
+                <div className="step-details">
+                  <h4 className="font-body-lg font-bold" style={{ fontWeight: '700', fontSize: '15px' }}>2. Scoring System</h4>
+                  <p className="font-body-sm" style={{ fontSize: '13px', color: 'var(--color-secondary)' }}>
+                    Gain <strong style={{ color: 'var(--color-accent)' }}>+0.5 pt</strong> for each new follower. Following other developers actively rewards you with <strong style={{ color: 'var(--color-accent)' }}>+1.0 pt</strong> to encourage networking!
+                  </p>
+                </div>
+              </div>
+
+              <div className="explanation-step" style={{ gap: '12px', alignItems: 'flex-start' }}>
+                <span className="material-symbols-outlined text-accent" style={{ fontSize: '24px', flexShrink: 0 }}>sync</span>
+                <div className="step-details">
+                  <h4 className="font-body-lg font-bold" style={{ fontWeight: '700', fontSize: '15px' }}>3. Dynamic Leaderboard</h4>
+                  <p className="font-body-sm" style={{ fontSize: '13px', color: 'var(--color-secondary)' }}>
+                    The leaderboard updates in real-time as follow changes are recorded.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Toast Notification */}
       {showToast && (
