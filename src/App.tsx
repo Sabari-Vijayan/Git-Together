@@ -994,6 +994,18 @@ export default function App() {
 
   return (
     <>
+      {/* Global Marquee Ticker */}
+      <div className="marquee-ticker">
+        <div className="marquee-content">
+          <span className="marquee-item">GIT-TOGETHER LOBBY MATCHMAKING</span>
+          <span className="marquee-item">CONNECT WITH DEVS</span>
+          <span className="marquee-item">GROW YOUR GITHUB NETWORK</span>
+          <span className="marquee-item">STATUS: {roomStatus === 'active' ? 'LIVE SESSION RUNNING' : roomStatus === 'concluded' ? 'MATCH CONCLUDED' : 'WAITING FOR PLAYERS'}</span>
+          {roomCode && <span className="marquee-item">ROOM CODE: {roomCode}</span>}
+          <span className="marquee-item">SYNCING REAL-TIME GITHUB FOLLOWERS</span>
+        </div>
+      </div>
+
       {/* Toast Notification */}
       {showToast && (
         <div 
