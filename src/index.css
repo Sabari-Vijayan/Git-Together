@@ -131,7 +131,7 @@ body::before {
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
-  opacity: 0.06; /* slight opacity merely blending in */
+  opacity: 0.18; /* slightly more visible blending background */
   pointer-events: none;
   transition: background-image var(--transition-normal), opacity var(--transition-normal);
 }
@@ -151,7 +151,7 @@ body::before {
 }
 
 html.dark body::before {
-  opacity: 0.03; /* slightly dimmer in dark mode for better contrast */
+  opacity: 0.12; /* slightly dimmer in dark mode but still visible */
 }
 
 #root {
@@ -1608,12 +1608,11 @@ html.dark .marquee-ticker {
   border-bottom: 2px solid #ffffff;
 }
 
-
 /* Premium Cyber-Manga Loader */
 .initial-loader {
   position: fixed;
   inset: 0;
-  background-color: #0c0c0e;
+  background-color: #08080a;
   z-index: 999;
   display: flex;
   flex-direction: column;
@@ -1622,6 +1621,26 @@ html.dark .marquee-ticker {
   transition: transform 0.8s cubic-bezier(0.85, 0, 0.15, 1), opacity 0.8s ease;
   pointer-events: all;
   overflow: hidden;
+}
+
+/* CRT Scanlines Overlay */
+.initial-loader::before {
+  content: " ";
+  display: block;
+  position: absolute;
+  top: 0; left: 0; bottom: 0; right: 0;
+  background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.35) 50%), 
+              linear-gradient(90deg, rgba(255, 0, 0, 0.05), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.05));
+  z-index: 1000;
+  background-size: 100% 4px, 6px 100%;
+  pointer-events: none;
+  animation: flicker 0.15s infinite;
+}
+
+@keyframes flicker {
+  0% { opacity: 0.97; }
+  50% { opacity: 1; }
+  100% { opacity: 0.98; }
 }
 
 .initial-loader.fade-out {
@@ -1635,36 +1654,78 @@ html.dark .marquee-ticker {
   color: var(--color-neon-pink);
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 20px;
   align-items: center;
-  text-shadow: 0 0 10px rgba(242, 74, 199, 0.3);
+  text-shadow: 0 0 10px rgba(242, 74, 199, 0.35);
+  z-index: 5;
 }
 
 .loader-logo {
-  font-size: 40px;
+  font-size: 44px;
   font-weight: 900;
   letter-spacing: -2px;
   text-transform: uppercase;
   color: #ffffff;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 12px;
+  position: relative;
+  animation: glitch 2s infinite;
 }
 
-.loader-logo-spin {
-  animation: logo-spin 1.5s cubic-bezier(0.68, -0.6, 0.32, 1.6) infinite;
-  display: inline-block;
-  color: var(--color-neon-pink);
+/* Glitch animation */
+@keyframes glitch {
+  0% {
+    text-shadow: 0.05em 0 0 rgba(255, 0, 0, 0.75),
+                -0.05em -0.025em 0 rgba(0, 255, 0, 0.75),
+                -0.025em 0.05em 0 rgba(0, 0, 255, 0.75);
+  }
+  14% {
+    text-shadow: 0.05em 0 0 rgba(255, 0, 0, 0.75),
+                -0.05em -0.025em 0 rgba(0, 255, 0, 0.75),
+                -0.025em 0.05em 0 rgba(0, 0, 255, 0.75);
+  }
+  15% {
+    text-shadow: -0.05em -0.025em 0 rgba(255, 0, 0, 0.75),
+                0.025em 0.025em 0 rgba(0, 255, 0, 0.75),
+                -0.05em -0.05em 0 rgba(0, 0, 255, 0.75);
+  }
+  49% {
+    text-shadow: -0.05em -0.025em 0 rgba(255, 0, 0, 0.75),
+                0.025em 0.025em 0 rgba(0, 255, 0, 0.75),
+                -0.05em -0.05em 0 rgba(0, 0, 255, 0.75);
+  }
+  50% {
+    text-shadow: 0.025em 0.05em 0 rgba(255, 0, 0, 0.75),
+                0.05em 0 0 rgba(0, 255, 0, 0.75),
+                0 -0.05em 0 rgba(0, 0, 255, 0.75);
+  }
+  99% {
+    text-shadow: 0.025em 0.05em 0 rgba(255, 0, 0, 0.75),
+                0.05em 0 0 rgba(0, 255, 0, 0.75),
+                0 -0.05em 0 rgba(0, 0, 255, 0.75);
+  }
+  100% {
+    text-shadow: -0.025em 0 0 rgba(255, 0, 0, 0.75),
+                -0.025em -0.025em 0 rgba(0, 255, 0, 0.75),
+                -0.025em -0.05em 0 rgba(0, 0, 255, 0.75);
+  }
 }
 
-@keyframes logo-spin {
-  0% { transform: rotate(0deg) scale(1); }
-  50% { transform: rotate(180deg) scale(1.1); }
-  100% { transform: rotate(360deg) scale(1); }
+.loader-logo-pulse {
+  animation: logo-pulse 1.8s ease-in-out infinite;
+  height: 56px;
+  width: auto;
+  object-fit: contain;
+}
+
+@keyframes logo-pulse {
+  0%, 100% { transform: scale(1); filter: drop-shadow(0 0 5px rgba(242, 74, 199, 0.4)); }
+  50% { transform: scale(1.08); filter: drop-shadow(0 0 15px rgba(242, 74, 199, 0.8)); }
 }
 
 .loader-progress-bar-container {
-  width: 240px;
+  width: 280px;
   height: 8px;
   border: 2px solid #ffffff;
   background-color: rgba(255, 255, 255, 0.1);
@@ -1686,10 +1747,23 @@ html.dark .marquee-ticker {
   color: #ffffff;
 }
 
-.loader-subtitle {
-  font-size: 9px;
-  color: #a1a1aa;
-  letter-spacing: 0.25em;
-  text-transform: uppercase;
-  margin-top: 8px;
+/* Scrolling terminal logs style */
+.loader-logs {
+  width: 280px;
+  text-align: left;
+  background-color: rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 8px 12px;
+  min-height: 48px;
+  border-radius: 4px;
+}
+
+.loader-log-item {
+  font-size: 10px;
+  letter-spacing: 0.05em;
+  color: var(--color-neon-green);
+  line-height: 1.4;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }

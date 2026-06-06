@@ -1052,6 +1052,15 @@ export default function App() {
   // Sorted list for leaderboard view
   const sortedLeaderboard = [...participants].sort((a, b) => b.score - a.score);
 
+  const getLoaderLog = (progress: number) => {
+    if (progress < 20) return "> INITIALIZING SECURE SHELL PROTOCOLS...";
+    if (progress < 40) return "> SYNCING CLAN DATA: ONIZOKU & BOSOZOKU...";
+    if (progress < 60) return "> ESTABLISHING REAL-TIME SOCKET CONNECTION...";
+    if (progress < 80) return "> MOUNTING MATCHMAKING ENGINE...";
+    if (progress < 100) return "> INJECTING GITHUB AUTH CREDENTIALS...";
+    return "> SYSTEM ONLINE. LAUNCHING GIT-TOGETHER.";
+  };
+
   return (
     <>
       {/* Premium Initial Loader Overlay */}
@@ -1059,7 +1068,7 @@ export default function App() {
         <div className={`initial-loader ${initProgress === 100 ? 'fade-out' : ''}`}>
           <div className="loader-terminal">
             <div className="loader-logo">
-              <span className="loader-logo-spin">⚡</span>
+              <img src="/logo.png" alt="Git-Together Logo" className="loader-logo-pulse" />
               <span>Git-Together</span>
             </div>
             <div className="loader-progress-bar-container">
@@ -1069,7 +1078,14 @@ export default function App() {
               ></div>
             </div>
             <div className="loader-percentage">{initProgress}%</div>
-            <div className="loader-subtitle">Loading Dev System</div>
+            
+            {/* Scrolling terminal logs */}
+            <div className="loader-logs">
+              <div className="loader-log-item">{getLoaderLog(initProgress)}</div>
+              <div className="loader-log-item" style={{ opacity: 0.5, marginTop: '2px' }}>
+                {initProgress >= 100 ? '[OK] SECURE_CONNECTION_STABLE' : '[WAIT] IN_PROGRESS...'}
+              </div>
+            </div>
           </div>
         </div>
       ) : null}
@@ -1192,7 +1208,8 @@ export default function App() {
         <>
           <header className="app-header">
             <div className="header-container">
-              <div className="logo-section">
+              <div className="logo-section" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <img src="/logo.png" alt="Logo" style={{ height: '32px', width: 'auto' }} />
                 <span className="font-h1 tracking-tighter text-on-background">Git-Together</span>
               </div>
               <button className="icon-btn material-symbols-outlined" onClick={toggleDarkMode}>
@@ -1202,6 +1219,10 @@ export default function App() {
           </header>
 
           <main className="app-main auth-gate">
+            <div className="hero-visual fade-in" style={{ animationDelay: '0.05s', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px', height: '140px', aspectRatio: 'auto', marginBottom: '24px' }}>
+              <img src="/logo.png" alt="Git-Together Logo" style={{ maxHeight: '120px', width: 'auto', filter: 'none', opacity: 1 }} />
+              <div className="hero-overlay"></div>
+            </div>
             <section className="explanation-card fade-in" style={{ animationDelay: '0.1s' }}>
               <div className="explanation-step">
                 <div className="step-number font-label-mono">01</div>
@@ -1249,7 +1270,8 @@ export default function App() {
         <>
           <header className="app-header">
             <div className="header-container">
-              <div className="logo-section">
+              <div className="logo-section" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <img src="/logo.png" alt="Logo" style={{ height: '32px', width: 'auto' }} />
                 <span className="font-h1 tracking-tighter text-on-background">Git-Together</span>
               </div>
               <div className="header-actions">
@@ -1350,7 +1372,8 @@ export default function App() {
         <>
           <header className="app-header">
             <div className="header-container">
-              <div className="logo-section">
+              <div className="logo-section" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <img src="/logo.png" alt="Logo" style={{ height: '32px', width: 'auto' }} />
                 <span className="font-h1 tracking-tighter text-on-background">Git-Together</span>
               </div>
               <div className="header-actions">
@@ -1464,7 +1487,8 @@ export default function App() {
           {/* Top Header */}
           <header className="app-header glass-header">
             <div className="header-container">
-              <div className="logo-section">
+              <div className="logo-section" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <img src="/logo.png" alt="Logo" style={{ height: '32px', width: 'auto' }} />
                 <div className="logo-avatar">
                   <img src={myAvatar} alt="My avatar" />
                 </div>
@@ -1717,7 +1741,8 @@ export default function App() {
 
           <header className="app-header">
             <div className="header-container">
-              <div className="logo-section">
+              <div className="logo-section" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <img src="/logo.png" alt="Logo" style={{ height: '32px', width: 'auto' }} />
                 <span className="font-h1 tracking-tighter text-on-background">Git-Together</span>
               </div>
               <button className="icon-btn material-symbols-outlined" onClick={toggleDarkMode}>
