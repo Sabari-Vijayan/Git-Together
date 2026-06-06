@@ -1,6 +1,18 @@
 -- =========================================================================
--- SECTION 1: FIX THE 500 SELECT ERROR (RLS RECURSION FIX)
+-- SECTION 1: CLEAN UP OBSOLETE FOLLOW LEDGER SCHEMA AND TRIGGERS
 -- Run this block once in the Supabase SQL Editor:
+-- =========================================================================
+
+-- 1. Drop trigger and its associated function
+DROP TRIGGER IF EXISTS trg_follow_ledger_insert ON follow_ledger;
+DROP FUNCTION IF EXISTS handle_follow_ledger_insert();
+
+-- 2. Drop the follow_ledger table (all indexes will be dropped automatically)
+DROP TABLE IF EXISTS follow_ledger CASCADE;
+
+
+-- =========================================================================
+-- SECTION 2: FIX THE 500 SELECT ERROR (RLS RECURSION FIX)
 -- =========================================================================
 
 CREATE OR REPLACE FUNCTION is_member_of_room(r_id UUID, u_id UUID)
@@ -22,9 +34,19 @@ CREATE POLICY "Allow room participants to view others" ON room_participants
 
 
 -- =========================================================================
--- SECTION 2: ENABLE SUPABASE REALTIME (FIX FOR ROOM NOT UPDATING LIVE)
--- Run this block once to tell Supabase to send WebSocket updates for joins:
+-- SECTION 3: ENABLE SUPABASE REALTIME (ONLY FOR ROOMS & PARTICIPANTS)
 -- =========================================================================
+
+-- Remove follow_ledger from publication if it exists
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1 FROM pg_publication_tables 
+    WHERE pubname = 'supabase_realtime' AND tablename = 'follow_ledger'
+  ) THEN
+    ALTER PUBLICATION supabase_realtime DROP TABLE follow_ledger;
+  END IF;
+END $$;
 
 DO $$
 BEGIN
@@ -41,19 +63,11 @@ BEGIN
   ) THEN
     ALTER PUBLICATION supabase_realtime ADD TABLE room_participants;
   END IF;
-
-  IF NOT EXISTS (
-    SELECT 1 FROM pg_publication_tables 
-    WHERE pubname = 'supabase_realtime' AND tablename = 'follow_ledger'
-  ) THEN
-    ALTER PUBLICATION supabase_realtime ADD TABLE follow_ledger;
-  END IF;
 END $$;
 
 
 -- =========================================================================
--- SECTION 3: REGISTER MOCK PLAYERS HELPER FUNCTION
--- Run this block once to enable mock player injection:
+-- SECTION 4: REGISTER MOCK PLAYERS HELPER FUNCTION
 -- =========================================================================
 
 CREATE OR REPLACE FUNCTION add_mock_players_to_room(room_code_val VARCHAR)
@@ -74,6 +88,7 @@ BEGIN
     ON CONFLICT (id) DO NOTHING;
 
     -- 2. Create mock profiles in public.profiles
+    -- Storing baseline followers and following counts.
     INSERT INTO profiles (id, github_username, display_name, avatar_url, github_followers, github_following)
     VALUES 
       ('00000000-0000-0000-0000-000000000005', 'test_coder_1', 'Alice Coder', 'https://avatar.iran.liara.run/public/5', 50, 30),
@@ -98,14 +113,13 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 -- (Replace '123456' with your actual 6-digit room code shown in the browser)
 -- =========================================================================
 
-SELECT add_mock_players_to_room('123456');
+-- SELECT add_mock_players_to_room('123456');
 
 
 -- =========================================================================
--- SECTION 4: INACTIVITY CLEANUP FUNCTIONS
+-- SECTION 5: INACTIVITY CLEANUP FUNCTIONS
 -- =========================================================================
 
--- Run this once to register the inactivity cleanup function:
 CREATE OR REPLACE FUNCTION cleanup_inactive_rooms()
 RETURNS VOID AS $$
 BEGIN
@@ -120,7 +134,5 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
-
--- Run this SQL statement manually, or schedule it to run every minute in pg_cron,
--- to clean up rooms that became empty after creators disconnected:
+-- Run this cleanup statement manually or trigger via cron
 SELECT cleanup_inactive_rooms();

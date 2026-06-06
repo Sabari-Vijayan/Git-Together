@@ -17,10 +17,9 @@ interface Participant {
 
 interface SyncLog {
   id: string;
-  follower: string;
-  followee: string;
-  status: 'pending' | 'processing' | 'synced' | 'failed';
+  message: string;
   timestamp: string;
+  type: 'info' | 'success' | 'warn';
 }
 
 interface ActiveRoom {
@@ -125,11 +124,10 @@ export default function App() {
   const [participants, setParticipants] = useState<Participant[]>([]);
   const [timer, setTimer] = useState<number>(462); // 07:42 in seconds
   const [selectedPeer, setSelectedPeer] = useState<Participant | null>(null);
-  const [followedIds, setFollowedIds] = useState<Set<string>>(new Set());
   const [showToast, setShowToast] = useState<string | null>(null);
   const [isDarkMode, setIsDarkMode] = useState<boolean>(false);
   
-  // Background Sync ledger emulation
+  // Activity/Event feed log
   const [syncLogs, setSyncLogs] = useState<SyncLog[]>([]);
   
   // Confetti ref
@@ -339,82 +337,94 @@ export default function App() {
     fetchRoomParticipants();
   }, [roomId]);
 
-  // Fetch followed developer IDs for the active room session
+  // Real-time subscription for room status changes and participant list updates
   useEffect(() => {
-    if (!supabase || !roomId || !myUserId || myUserId === 'me') {
-      setFollowedIds(new Set());
-      return;
-    }
+    if (!supabase || !roomId) return;
 
-    const fetchFollowedIds = async () => {
-      try {
-        const { data, error } = await supabase!
-          .from('follow_ledger')
-          .select('followee_id')
-          .eq('room_id', roomId)
-          .eq('follower_id', myUserId);
+    // Fetch initial list of participants
+    fetchRoomParticipants();
 
-        if (error) {
-          console.error('Error fetching followed IDs:', error.message);
-        } else {
-          const ids = new Set((data || []).map((row: any) => row.followee_id));
-          setFollowedIds(ids);
+    // Subscribe to changes
+    const channel = supabase
+      .channel(`room:${roomId}`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'rooms', filter: `id=eq.${roomId}` },
+        (payload: any) => {
+          const newStatus = payload.new?.status;
+          const endsAt = payload.new?.ends_at;
+          if (newStatus) {
+            setRoomStatus(newStatus);
+            if (newStatus === 'active') {
+              if (endsAt) {
+                const remaining = Math.max(0, Math.floor((new Date(endsAt).getTime() - Date.now()) / 1000));
+                setTimer(remaining);
+              }
+              setScreen('game');
+              setActiveTab('leaderboard');
+              triggerToast('The session has started!');
+              
+              // Log start event
+              const startLog: SyncLog = {
+                id: Math.random().toString(),
+                message: 'Game session started by organizer',
+                timestamp: new Date().toLocaleTimeString(),
+                type: 'success'
+              };
+              setSyncLogs((prev) => [startLog, ...prev]);
+            } else if (newStatus === 'concluded') {
+              fetchRoomParticipants();
+              setScreen('concluded');
+              triggerToast('Game Concluded! Checking podium...');
+              
+              // Log conclude event
+              const endLog: SyncLog = {
+                id: Math.random().toString(),
+                message: 'Match concluded! Final scores calculated.',
+                timestamp: new Date().toLocaleTimeString(),
+                type: 'success'
+              };
+              setSyncLogs((prev) => [endLog, ...prev]);
+            }
+          }
         }
-      } catch (err) {
-        console.error('Error in fetchFollowedIds:', err);
-      }
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'room_participants', filter: `room_id=eq.${roomId}` },
+        () => {
+          // Refresh participants list when any participant updates or new players join
+          fetchRoomParticipants();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase?.removeChannel(channel);
     };
-
-    fetchFollowedIds();
-  }, [roomId, myUserId]);
-
-  // Fetch follow ledger logs for the active room session
-  useEffect(() => {
-    if (!supabase || !roomId) {
-      setSyncLogs([]);
-      return;
-    }
-
-    const fetchSyncLogs = async () => {
-      try {
-        const { data: ledgerData, error: ledgerError } = await supabase!
-          .from('follow_ledger')
-          .select('id, follower_id, followee_id, sync_status, created_at')
-          .eq('room_id', roomId)
-          .order('created_at', { ascending: false });
-
-        if (ledgerError) {
-          console.error('Error fetching sync logs:', ledgerError.message);
-          return;
-        }
-
-        if (ledgerData && ledgerData.length > 0) {
-          const userIds = Array.from(new Set(ledgerData.flatMap(r => [r.follower_id, r.followee_id])));
-          const { data: profilesData } = await supabase!
-            .from('profiles')
-            .select('id, github_username')
-            .in('id', userIds);
-            
-          const profileMap = new Map((profilesData || []).map(p => [p.id, p.github_username]));
-          
-          const mappedLogs: SyncLog[] = ledgerData.map((row: any) => ({
-            id: row.id,
-            follower: profileMap.get(row.follower_id) || 'unknown',
-            followee: profileMap.get(row.followee_id) || 'unknown',
-            status: row.sync_status,
-            timestamp: new Date(row.created_at).toLocaleTimeString()
-          }));
-          setSyncLogs(mappedLogs);
-        } else {
-          setSyncLogs([]);
-        }
-      } catch (err) {
-        console.error('Error in fetchSyncLogs:', err);
-      }
-    };
-
-    fetchSyncLogs();
   }, [roomId]);
+
+  // Log participant join events dynamically based on participants list changes
+  const prevParticipantsLength = useRef(0);
+  useEffect(() => {
+    if (participants.length > 0) {
+      if (participants.length > prevParticipantsLength.current) {
+        const newlyJoined = participants.filter(
+          (p) => !participants.slice(0, prevParticipantsLength.current).some((old) => old.id === p.id)
+        );
+        newlyJoined.forEach((p) => {
+          const logMsg: SyncLog = {
+            id: Math.random().toString(),
+            message: `@${p.github_username} joined the lobby`,
+            timestamp: new Date().toLocaleTimeString(),
+            type: 'info'
+          };
+          setSyncLogs((prev) => [logMsg, ...prev].slice(0, 50));
+        });
+      }
+      prevParticipantsLength.current = participants.length;
+    }
+  }, [participants]);
 
   const fetchRoomParticipants = async () => {
     if (!supabase || !roomId) return;
@@ -469,11 +479,10 @@ export default function App() {
     }
   }, [screen, participants]);
 
-  // Peer activity simulator in active game
+  // Peer activity simulator in active game (Simulation log events only, no score changes)
   useEffect(() => {
     if (!supabase && screen === 'game' && roomStatus === 'active') {
       const interval = setInterval(() => {
-        // Randomly choose a participant to follow another participant
         const validPeers = participants.filter(p => p.github_username !== myUsername);
         if (validPeers.length > 1) {
           const followerIdx = Math.floor(Math.random() * validPeers.length);
@@ -484,45 +493,14 @@ export default function App() {
           const follower = validPeers[followerIdx];
           const followee = validPeers[followeeIdx];
           
-          // Apply score changes
-          setParticipants((prev) => 
-            prev.map((p) => {
-              if (p.id === follower.id) {
-                const newFollowing = p.current_following + 1;
-                const deltaFollowers = p.current_followers - p.baseline_followers;
-                const deltaFollowing = newFollowing - p.baseline_following;
-                return {
-                  ...p,
-                  current_following: newFollowing,
-                  score: parseFloat((deltaFollowers - 0.5 * deltaFollowing).toFixed(1)),
-                };
-              }
-              if (p.id === followee.id) {
-                const newFollowers = p.current_followers + 1;
-                const deltaFollowers = newFollowers - p.baseline_followers;
-                const deltaFollowing = p.current_following - p.baseline_following;
-                return {
-                  ...p,
-                  current_followers: newFollowers,
-                  score: parseFloat((deltaFollowers - 0.5 * deltaFollowing).toFixed(1)),
-                };
-              }
-              return p;
-            })
-          );
-          
-          // Add sync log
+          // Add activity log
           const newLog: SyncLog = {
             id: Math.random().toString(),
-            follower: follower.github_username,
-            followee: followee.github_username,
-            status: 'pending',
+            message: `@${follower.github_username} opened @${followee.github_username}'s GitHub profile`,
             timestamp: new Date().toLocaleTimeString(),
+            type: 'info'
           };
-          setSyncLogs((prev) => [newLog, ...prev.slice(0, 14)]);
-          
-          // Simulate edge worker updating sync log
-          simulateEdgeSync(newLog.id);
+          setSyncLogs((prev) => [newLog, ...prev].slice(0, 50));
         }
       }, 7000);
       
@@ -867,56 +845,6 @@ export default function App() {
       console.error('Exception in handleManualRefresh:', err);
     }
     
-    // 3. Fetch followed IDs
-    if (myUserId && myUserId !== 'me') {
-      try {
-        const { data: followData } = await supabase
-          .from('follow_ledger')
-          .select('followee_id')
-          .eq('room_id', roomId)
-          .eq('follower_id', myUserId);
-          
-        if (followData) {
-          const ids = new Set(followData.map((row: any) => row.followee_id));
-          setFollowedIds(ids);
-        }
-      } catch (err) {
-        console.error('Error fetching followed IDs on refresh:', err);
-      }
-    }
-    
-    // 4. Fetch activity logs
-    try {
-      const { data: ledgerData } = await supabase
-        .from('follow_ledger')
-        .select('id, follower_id, followee_id, sync_status, created_at')
-        .eq('room_id', roomId)
-        .order('created_at', { ascending: false });
-
-      if (ledgerData && ledgerData.length > 0) {
-        const userIds = Array.from(new Set(ledgerData.flatMap(r => [r.follower_id, r.followee_id])));
-        const { data: profilesData } = await supabase
-          .from('profiles')
-          .select('id, github_username')
-          .in('id', userIds);
-          
-        const profileMap = new Map((profilesData || []).map(p => [p.id, p.github_username]));
-        
-        const mappedLogs: SyncLog[] = ledgerData.map((row: any) => ({
-          id: row.id,
-          follower: profileMap.get(row.follower_id) || 'unknown',
-          followee: profileMap.get(row.followee_id) || 'unknown',
-          status: row.sync_status,
-          timestamp: new Date(row.created_at).toLocaleTimeString()
-        }));
-        setSyncLogs(mappedLogs);
-      } else {
-        setSyncLogs([]);
-      }
-    } catch (err) {
-      console.error('Error fetching sync logs on refresh:', err);
-    }
-    
     triggerToast('Room data manually refreshed.');
   };
 
@@ -927,25 +855,15 @@ export default function App() {
     }
     
     if (supabase && roomId) {
-      const { data: updatedRoom, error } = await supabase
-        .from('rooms')
-        .update({ status: 'active' })
-        .eq('id', roomId)
-        .select('ends_at')
-        .single();
+      const { error } = await supabase.functions.invoke('room-state-manager', {
+        body: { room_id: roomId, action: 'start' }
+      });
 
       if (error) {
         triggerToast(`Error starting session: ${error.message}`);
         return;
       }
 
-      if (updatedRoom && updatedRoom.ends_at) {
-        const remaining = Math.max(0, Math.floor((new Date(updatedRoom.ends_at).getTime() - Date.now()) / 1000));
-        setTimer(remaining);
-      }
-      setRoomStatus('active');
-      setScreen('game');
-      setActiveTab('leaderboard');
       triggerToast('Organizer started the session! Time to connect!');
     } else {
       setRoomStatus('active');
@@ -964,106 +882,56 @@ export default function App() {
     }
   };
 
-  const handleFollow = async (peer: Participant) => {
-    if (followedIds.has(peer.id)) return;
+  const handleOpenGitHub = (peer: Participant) => {
+    window.open(`https://github.com/${peer.github_username}`, '_blank');
     
-    setFollowedIds((prev) => {
-      const next = new Set(prev);
-      next.add(peer.id);
-      return next;
-    });
-
-    if (supabase && roomId) {
-      const { error } = await supabase
-        .from('follow_ledger')
-        .insert({
-          room_id: roomId,
-          follower_id: myUserId,
-          followee_id: peer.id
-        });
-
-      if (error) {
-        triggerToast(`Failed to follow: ${error.message}`);
-        setFollowedIds((prev) => {
-          const next = new Set(prev);
-          next.delete(peer.id);
-          return next;
-        });
-      } else {
-        triggerToast(`Logged follow of @${peer.github_username} in ledger.`);
-      }
-    } else {
-      const logId = Math.random().toString();
-      const newLog: SyncLog = {
-        id: logId,
-        follower: myUsername,
-        followee: peer.github_username,
-        status: 'pending',
-        timestamp: new Date().toLocaleTimeString(),
-      };
-      setSyncLogs((prev) => [newLog, ...prev]);
-
-      setParticipants((prev) => 
-        prev.map((p) => {
-          if (p.isYou) {
-            const newFollowing = p.current_following + 1;
-            const deltaFollowers = p.current_followers - p.baseline_followers;
-            const deltaFollowing = newFollowing - p.baseline_following;
-            return {
-              ...p,
-              current_following: newFollowing,
-              score: parseFloat((deltaFollowers - 0.5 * deltaFollowing).toFixed(1)),
-            };
-          }
-          if (p.id === peer.id) {
-            const newFollowers = p.current_followers + 1;
-            const deltaFollowers = newFollowers - p.baseline_followers;
-            const deltaFollowing = p.current_following - p.baseline_following;
-            return {
-              ...p,
-              current_followers: newFollowers,
-              score: parseFloat((deltaFollowers - 0.5 * deltaFollowing).toFixed(1)),
-            };
-          }
-          return p;
-        })
-      );
-      
-      triggerToast(`You followed @${peer.github_username}!`);
-      simulateEdgeSync(logId);
-    }
-  };
-
-  // Edge Sync background simulation
-  const simulateEdgeSync = (logId: string) => {
-    // 1s later, change to 'processing'
-    setTimeout(() => {
-      setSyncLogs((prev) => 
-        prev.map((l) => (l.id === logId ? { ...l, status: 'processing' } : l))
-      );
-      
-      // 1.2s later, change to 'synced' (GitHub API call succeeds)
-      setTimeout(() => {
-        setSyncLogs((prev) => 
-          prev.map((l) => (l.id === logId ? { ...l, status: 'synced' } : l))
-        );
-      }, 1200);
-    }, 1000);
+    // Log manual follow attempt locally
+    const newLog: SyncLog = {
+      id: Math.random().toString(),
+      message: `You opened @${peer.github_username}'s GitHub profile`,
+      timestamp: new Date().toLocaleTimeString(),
+      type: 'info'
+    };
+    setSyncLogs((prev) => [newLog, ...prev].slice(0, 50));
+    
+    triggerToast(`Opened GitHub for @${peer.github_username}. Follow them manually!`);
   };
 
   const handleEndSession = async () => {
     if (supabase && roomId && isOrganizer) {
-      const { error } = await supabase
-        .from('rooms')
-        .update({ status: 'concluded' })
-        .eq('id', roomId);
+      const { error } = await supabase.functions.invoke('room-state-manager', {
+        body: { room_id: roomId, action: 'conclude' }
+      });
       if (error) {
-        console.error('Error concluding room in database:', error.message);
+        console.error('Error concluding room:', error.message);
+        triggerToast(`Failed to conclude room: ${error.message}`);
+        return;
       }
+    } else if (!supabase) {
+      // Simulator Mode: generate random final stats
+      setParticipants((prev) => 
+        prev.map((p) => {
+          const extraFollowers = Math.floor(Math.random() * 5); // 0 to 4 new followers
+          const extraFollowing = Math.floor(Math.random() * 6); // 0 to 5 new following
+          
+          const newFollowers = p.current_followers + extraFollowers;
+          const newFollowing = p.current_following + extraFollowing;
+          const deltaFollowers = newFollowers - p.baseline_followers;
+          const deltaFollowing = newFollowing - p.baseline_following;
+          const score = deltaFollowers - 0.5 * deltaFollowing;
+
+          return {
+            ...p,
+            current_followers: newFollowers,
+            current_following: newFollowing,
+            score: parseFloat(score.toFixed(1))
+          };
+        })
+      );
+      setRoomStatus('concluded');
+      setScreen('concluded');
+      triggerToast('Game Concluded! Checking podium...');
     }
-    setRoomStatus('concluded');
-    setScreen('concluded');
-    triggerToast('Game Concluded! Checking podium...');
   };
 
   const handleLeaveRoom = async () => {
@@ -1074,10 +942,9 @@ export default function App() {
 
     if (supabase && roomId && myUserId) {
       if (isOrganizer) {
-        const { error } = await supabase
-          .from('rooms')
-          .update({ status: 'concluded' })
-          .eq('id', roomId);
+        const { error } = await supabase.functions.invoke('room-state-manager', {
+          body: { room_id: roomId, action: 'conclude' }
+        });
         if (error) {
           console.error('Error concluding room on leave:', error.message);
         }
@@ -1097,7 +964,6 @@ export default function App() {
     setRoomId('');
     setIsOrganizer(false);
     setParticipants([]);
-    setFollowedIds(new Set());
     setSyncLogs([]);
     triggerToast(isOrganizer ? 'Closed the room.' : 'Left the room.');
   };
@@ -1545,7 +1411,6 @@ export default function App() {
                   {sortedLeaderboard.map((p, idx) => {
                     const rank = idx + 1;
                     const isUser = p.isYou;
-                    const alreadyFollowed = followedIds.has(p.id);
 
                     return (
                       <div 
@@ -1586,19 +1451,18 @@ export default function App() {
 
                         <div className="row-action">
                           {isUser ? (
-                            <span className="row-status-playing font-label-mono">PLAYING</span>
+                            <span className="row-status-playing font-label-mono">YOU</span>
                           ) : (
                             <button
-                              disabled={alreadyFollowed}
                               onClick={() => {
-                                setSelectedPeer(p);
+                                handleOpenGitHub(p);
                               }}
-                              className={`follow-action-btn ${alreadyFollowed ? 'followed' : ''}`}
+                              className="follow-action-btn"
                             >
                               <span className="material-symbols-outlined text-sm">
-                                {alreadyFollowed ? 'check' : 'person_add'}
+                                open_in_new
                               </span>
-                              <span>{alreadyFollowed ? 'Following' : '+ Follow'}</span>
+                              <span>GitHub</span>
                             </button>
                           )}
                         </div>
@@ -1612,11 +1476,11 @@ export default function App() {
             {activeTab === 'feed' && (
               <div className="w-full fade-in">
                 <div className="section-header">
-                  <h3 className="font-h2">Live Network Feed</h3>
+                  <h3 className="font-h2">Live Event Feed</h3>
                   <span className="font-label-mono text-secondary">REALTIME ACTIVITIES</span>
                 </div>
 
-                {/* Simulated Supabase Realtime broadcast log feed */}
+                {/* Live event feed */}
                 <div 
                   className="flex flex-col gap-sm w-full p-md bg-surface-container-low rounded-xl border border-outline-variant"
                   style={{ minHeight: '240px' }}
@@ -1624,8 +1488,8 @@ export default function App() {
                   {syncLogs.length === 0 ? (
                     <div className="flex flex-col items-center justify-center flex-grow text-center text-secondary py-xl">
                       <span className="material-symbols-outlined text-display opacity-40 mb-sm">rss_feed</span>
-                      <p className="font-body-sm">No activity logs recorded yet in this session.</p>
-                      <p className="font-label-mono" style={{ fontSize: '10px', marginTop: '4px' }}>Follow someone to start logging transactions.</p>
+                      <p className="font-body-sm">No events recorded yet in this session.</p>
+                      <p className="font-label-mono" style={{ fontSize: '10px', marginTop: '4px' }}>Events will appear as developers join or start.</p>
                     </div>
                   ) : (
                     syncLogs.map((log) => (
@@ -1636,31 +1500,14 @@ export default function App() {
                       >
                         <div className="flex items-center gap-sm">
                           <span className="material-symbols-outlined text-secondary" style={{ fontSize: '18px' }}>
-                            swap_calls
+                            {log.type === 'success' ? 'check_circle' : log.type === 'warn' ? 'warning' : 'info'}
                           </span>
                           <span className="font-body-sm text-primary">
-                            <strong>@{log.follower}</strong> followed <strong>@{log.followee}</strong>
+                            {log.message}
                           </span>
                         </div>
                         <div className="flex items-center gap-sm">
                           <span className="font-label-mono text-secondary" style={{ fontSize: '10px' }}>{log.timestamp}</span>
-                          <span 
-                            className="font-label-mono" 
-                            style={{
-                              fontSize: '10px',
-                              padding: '2px 6px',
-                              borderRadius: '4px',
-                              fontWeight: '700',
-                              backgroundColor: 
-                                log.status === 'synced' ? 'rgba(16, 185, 129, 0.15)' :
-                                log.status === 'processing' ? 'rgba(59, 130, 246, 0.15)' : 'rgba(245, 158, 11, 0.15)',
-                              color: 
-                                log.status === 'synced' ? '#10B981' :
-                                log.status === 'processing' ? '#3B82F6' : '#F59E0B'
-                            }}
-                          >
-                            {log.status.toUpperCase()}
-                          </span>
                         </div>
                       </div>
                     ))
@@ -1860,31 +1707,16 @@ export default function App() {
             </div>
 
             {/* Add action */}
-            {followedIds.has(selectedPeer.id) ? (
-              <div 
-                className="border-button w-full font-button"
-                style={{
-                  backgroundColor: 'var(--color-surface-container-low)',
-                  borderColor: 'var(--color-outline-variant)',
-                  cursor: 'default',
-                  color: 'var(--color-secondary)'
-                }}
-              >
-                <span className="material-symbols-outlined text-accent text-sm">check</span>
-                Already Following
-              </div>
-            ) : (
-              <button 
-                onClick={() => {
-                  handleFollow(selectedPeer);
-                  setSelectedPeer(null);
-                }} 
-                className="obsidian-button w-full font-button"
-              >
-                <span className="material-symbols-outlined">person_add</span>
-                Confirm Follow
-              </button>
-            )}
+            <button 
+              onClick={() => {
+                handleOpenGitHub(selectedPeer);
+                setSelectedPeer(null);
+              }} 
+              className="obsidian-button w-full font-button"
+            >
+              <span className="material-symbols-outlined">open_in_new</span>
+              Open Profile to Follow
+            </button>
           </div>
         </div>
       )}
