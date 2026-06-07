@@ -1,5 +1,6 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { supabase } from './supabaseClient';
+import type { Session, RealtimePostgresChangesPayload } from '@supabase/supabase-js';
 
 // Interfaces for our app state
 interface Participant {
@@ -99,6 +100,32 @@ const INITIAL_PARTICIPANTS: Participant[] = [
     score: 0,
   },
 ];
+
+// Helpers to compute remaining seconds, random IDs, steps, and type structures
+function getRemainingSeconds(endsAt: string): number {
+  return Math.max(0, Math.floor((new Date(endsAt).getTime() - Date.now()) / 1000));
+}
+
+function getNewRandomId(): string {
+  return Math.random().toString();
+}
+
+function getRandomStep(): number {
+  return Math.floor(Math.random() * 10) + 5;
+}
+
+interface ProfilePayload {
+  id: string;
+  github_username: string;
+  display_name: string;
+  avatar_url: string;
+  updated_at: string;
+  provider_token?: string | null;
+  provider_refresh_tk?: string | null;
+  github_followers?: number;
+  github_following?: number;
+  github_node_id?: string | null;
+}
 
 export default function App() {
   // Navigation & Screens
