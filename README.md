@@ -39,7 +39,7 @@ During the development, AI tools (such as Codex and ChatGPT) were utilized for:
 - **API Integration:** Formulating OAuth scopes and rate-limiting retry protocols.
 
 ## Demo
-- [Git-Together Demo Video](screenshots/demo_of_git-together.mp4)
+- [Git-Together Demo Video](https://drive.google.com/file/d/1FHOwiEi2KseDfpiG4MUBsbq6MpZYn5sH/view?usp=sharing)
 
 ## Screenshots
 <div align="center">
