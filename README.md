@@ -1,5 +1,9 @@
 # Git-Together
 
+# Hosted Link 
+
+Link - https://git-together-enj7.vercel.app/
+
 ## Overview
 Git-Together is a premium, gamified developer networking and matchmaking web application. Tailored for hackathons and tech events in a fictional cyber-manga setting, it enables attendees to scan each other's custom QR codes, follow peers in real-time, view live leaderboards, and sync active developer connections directly back to GitHub in the background.
 
